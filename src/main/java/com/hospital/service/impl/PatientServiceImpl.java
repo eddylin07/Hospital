@@ -85,6 +85,11 @@ public class PatientServiceImpl implements PatientService {
     public String seek(Patient patient) {
         Seek seek = new Seek();
         String drugsids=patient.getDrugsids();
+        Seek latestSeek = seekMapper.getSeekByPatientId(patient.getId());
+        if (latestSeek == null) {
+            return CommonService.upd_message_error;
+        }
+        seek.setId(latestSeek.getId());
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
