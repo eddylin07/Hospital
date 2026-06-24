@@ -32,7 +32,7 @@ public class SeekMapperXmlTest {
 
         assertTrue(sql.contains("where id=("));
         assertTrue(sql.contains("select id from seek where patientid=#{patientid} order by id desc limit 1"));
-        assertFalse(sql.contains("where patientid=#{patientid}"));
+        assertFalse(sql.contains("price=price+#{price} where patientid=#{patientid}"));
     }
 
     private EntityResolver localMyBatisDtdResolver() {
