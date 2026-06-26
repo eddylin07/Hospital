@@ -7,20 +7,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpSession;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class LoginControllerTest {
     private LoginController controller;
-    private LoginService loginService;
+    private StubLoginService loginService;
     private MockHttpSession session;
 
     @Before
     public void setUp() {
         controller=new LoginController();
-        loginService=mock(LoginService.class);
+        loginService=new StubLoginService();
         controller.loginService=loginService;
         session=new MockHttpSession();
     }
@@ -37,7 +37,7 @@ public class LoginControllerTest {
         submittedLogin.setPassword("wrong-password");
         submittedLogin.setId(1);
         submittedLogin.setRole(1);
-        when(loginService.login(submittedLogin)).thenReturn("密码错误");
+        loginService.message="密码错误";
 
         JSONObject response=controller.login(submittedLogin,session);
 
@@ -50,11 +50,8 @@ public class LoginControllerTest {
         Login submittedLogin=new Login();
         submittedLogin.setUsername("doctor");
         submittedLogin.setPassword("correct-password");
-        when(loginService.login(submittedLogin)).thenAnswer(invocation -> {
-            submittedLogin.setId(2);
-            submittedLogin.setRole(2);
-            return "登录成功2";
-        });
+        loginService.message="登录成功2";
+        loginService.authenticated=true;
 
         JSONObject response=controller.login(submittedLogin,session);
 
@@ -64,5 +61,49 @@ public class LoginControllerTest {
         assertEquals(Integer.valueOf(2),sessionLogin.getRole());
         assertEquals("doctor",sessionLogin.getUsername());
         assertNull(sessionLogin.getPassword());
+    }
+
+    private static class StubLoginService implements LoginService {
+        private String message;
+        private boolean authenticated;
+
+        @Override
+        public String login(Login login) {
+            if(authenticated){
+                login.setId(2);
+                login.setRole(2);
+            }
+            return message;
+        }
+
+        @Override
+        public List<Login> findAllAdmin(String username) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String addAmin(Login login) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String updateAdmin(Login login) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String delAdmin(Integer id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Login getAdmin(Integer id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String regist(Login login) {
+            throw new UnsupportedOperationException();
+        }
     }
 }
