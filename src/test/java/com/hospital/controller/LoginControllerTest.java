@@ -7,23 +7,16 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
+
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class LoginControllerTest {
     @Test
     public void loginStoresSessionOnlyWhenAuthenticationSucceeds() {
-        LoginService loginService = mock(LoginService.class);
-        when(loginService.login(any(Login.class))).thenAnswer(invocation -> {
-            Login login = invocation.getArgument(0);
-            login.setId(7);
-            login.setRole(2);
-            return "登录成功2";
-        });
+        LoginService loginService = new FakeLoginService("登录成功2", 2);
         LoginController controller = new LoginController();
         ReflectionTestUtils.setField(controller, "loginService", loginService);
         MockHttpSession session = new MockHttpSession();
@@ -38,8 +31,7 @@ public class LoginControllerTest {
 
     @Test
     public void loginClearsSessionWhenAuthenticationFails() {
-        LoginService loginService = mock(LoginService.class);
-        when(loginService.login(any(Login.class))).thenReturn("密码错误");
+        LoginService loginService = new FakeLoginService("密码错误", null);
         LoginController controller = new LoginController();
         ReflectionTestUtils.setField(controller, "loginService", loginService);
         MockHttpSession session = new MockHttpSession();
@@ -49,5 +41,54 @@ public class LoginControllerTest {
 
         assertEquals("密码错误", response.get("message"));
         assertNull(session.getAttribute("login"));
+    }
+
+    private static class FakeLoginService implements LoginService {
+        private final String loginMessage;
+        private final Integer role;
+
+        FakeLoginService(String loginMessage, Integer role) {
+            this.loginMessage = loginMessage;
+            this.role = role;
+        }
+
+        @Override
+        public String login(Login login) {
+            if (role != null) {
+                login.setId(7);
+                login.setRole(role);
+            }
+            return loginMessage;
+        }
+
+        @Override
+        public List<Login> findAllAdmin(String username) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String addAmin(Login login) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String updateAdmin(Login login) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String delAdmin(Integer id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Login getAdmin(Integer id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String regist(Login login) {
+            throw new UnsupportedOperationException();
+        }
     }
 }
