@@ -25,9 +25,33 @@ public class LoginInterceptor implements HandlerInterceptor {
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+
+        if(!hasRequiredRole(request, login)){
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+
+        return true;    //如果session里有login且权限匹配，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean hasRequiredRole(HttpServletRequest request, Login login) {
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.equals("") && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+
+        if (path.startsWith("/admin/") || path.startsWith("/hospital/admin/")) {
+            return Integer.valueOf(1).equals(login.getRole());
+        }
+        if (path.startsWith("/doctor/") || path.startsWith("/hospital/doctor/")) {
+            return Integer.valueOf(2).equals(login.getRole());
+        }
+        if (path.startsWith("/patient/") || path.startsWith("/hospital/patient/")) {
+            return Integer.valueOf(3).equals(login.getRole());
+        }
+        return true;
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
