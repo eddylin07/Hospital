@@ -15,4 +15,5 @@
 ## Testing Notes
 
 - Preferred validation command: `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test`.
+- 2026-07-17 coverage automation added JUnit 4/Mockito tests for `LoginInterceptor`, `PatientServiceImpl.seek`, and `DrugsUtils`; validation passed with `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` (7 tests).
 
