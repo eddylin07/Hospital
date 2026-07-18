@@ -23,4 +23,5 @@ JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test
 - The original `master` branch had little or no checked-in test coverage.
 - Prior automation work added reference JUnit 4/Mockito style tests for MyBatis XML and service/interceptor behavior.
 - Existing high-risk areas include MyBatis mapper SQL, login/session handling, patient visit creation, and utility logic.
+- On branch `cursor/missing-test-coverage-682d`, `SeekMapperXmlTest` covers `updateDrugs` so prescriptions update only the latest seek row for a patient and use null-safe price accumulation; `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed.
 
