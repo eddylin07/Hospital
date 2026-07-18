@@ -29,6 +29,11 @@
      update seek
      set drugs=#{drugs},price=price+#{price}
      where patientid=#{patientid}
+     and id=(
+       select id from (
+         select id from seek where patientid=#{patientid} order by id desc limit 1
+       ) latest_seek
+     )
   </update>
 
 </mapper>
