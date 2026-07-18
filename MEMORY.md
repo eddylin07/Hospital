@@ -16,3 +16,4 @@
 
 - Record new durable findings here when they affect future work.
 - Do not store secret values in this file.
+- On `cursor/critical-bug-investigation-d66d`, critical fixes were applied for failed-login sessions, role authorization, public admin registration, and prescription inventory/seek-row corruption. `mvn test` passed with 8 tests on 2026-07-18.
