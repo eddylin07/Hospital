@@ -14,3 +14,4 @@
 ## Automation notes
 
 - `~/.codex/templates/AGENTS.md` and `~/.codex/templates/MEMORY.md` were not present in this cloud image, so minimal project-local files were created from inferred project details.
+- On branch `cursor/missing-test-coverage-7e74`, regression tests were added for `SeekMapper.updateDrugs` and `PatientServiceImpl.seek`; the mapper now updates only the latest seek row with null-safe price accumulation, and the service returns before writes when requested drug quantity exceeds stock.
