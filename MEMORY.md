@@ -19,3 +19,7 @@
 
 - The legacy Lombok/Spring Boot test stack may fail on Java 21 unless dependencies are updated.
 - Maven may need to be installed in the cloud image before running tests.
+
+## Investigation notes
+
+- On `cursor/critical-bug-investigation-1ab0`, fixed authentication/session bypasses, public admin self-registration, missing role checks on protected admin/doctor/patient paths, prescription inventory oversell, and all-history seek row drug/price corruption. `mvn test` passed with 9 tests on 2026-07-19.
