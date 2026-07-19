@@ -82,43 +82,42 @@ public class LoginServiceImpl implements LoginService {
     @Override
     public String regist(Login login) {
         String message;
-        Doctor doctor=doctorMapper.getDoctorByCertId(login.getCertId());
-        Patient patient=patientMapper.findPatientByCertId(login.getCertId());
-        if(doctor!=null){
-            if(doctor.getLoginid()==null){
-                login.setRole(2);
-                loginMapper.insert(login);
-                doctor.setLoginid(loginMapper.findByUsername(login.getUsername()).getId());
-                doctorMapper.updateByPrimaryKeySelective(doctor);
-                message="注册成功";
-            }
-            else {
-                message="该证件号已被注册";
-            }
-
-        }
-        else if(patient!=null){
-            if(patient.getLoginid()==null){
-                login.setRole(3);
-                loginMapper.insert(login);
-                patient.setLoginid(loginMapper.findByUsername(login.getUsername()).getId());
-                patientMapper.updateByPrimaryKeySelective(patient);
-                message="注册成功";
-            }
-            else {
-                message="该证件号已被注册";
-            }
-        }
-        else if(loginMapper.findByUsername(login.getUsername())!=null){
+        if(loginMapper.findByUsername(login.getUsername())!=null){
             message="该用户名已被注册";
         }
-        else if(loginMapper.findByUsername(login.getUsername())==null&&(login.getCertId()==null||login.getCertId().trim().equals(""))){
-            login.setRole(1);
-            loginMapper.insert(login);
-            message="注册成功";
-        }
-        else {
+        else if(login.getCertId()==null||login.getCertId().trim().equals("")){
             message="该证件信息未入库，不能注册该医生或者患者";
+        }
+        else{
+            Doctor doctor=doctorMapper.getDoctorByCertId(login.getCertId());
+            Patient patient=patientMapper.findPatientByCertId(login.getCertId());
+            if(doctor!=null){
+                if(doctor.getLoginid()==null){
+                    login.setRole(2);
+                    loginMapper.insert(login);
+                    doctor.setLoginid(loginMapper.findByUsername(login.getUsername()).getId());
+                    doctorMapper.updateByPrimaryKeySelective(doctor);
+                    message="注册成功";
+                }
+                else {
+                    message="该证件号已被注册";
+                }
+            }
+            else if(patient!=null){
+                if(patient.getLoginid()==null){
+                    login.setRole(3);
+                    loginMapper.insert(login);
+                    patient.setLoginid(loginMapper.findByUsername(login.getUsername()).getId());
+                    patientMapper.updateByPrimaryKeySelective(patient);
+                    message="注册成功";
+                }
+                else {
+                    message="该证件号已被注册";
+                }
+            }
+            else {
+                message="该证件信息未入库，不能注册该医生或者患者";
+            }
         }
         return message;
     }
