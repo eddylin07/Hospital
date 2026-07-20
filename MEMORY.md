@@ -14,6 +14,7 @@
   - `SeekMapper.updateDrugs` SQL should update only the latest seek row and handle null price accumulation.
   - `PatientServiceImpl.seek`, `LoginInterceptor`, and `DrugsUtils` have had focused JUnit 4 / Mockito tests on prior coverage branches.
 - Keep new tests deterministic and independent of a live database by parsing mapper XML or mocking DAO collaborators.
+- On branch `cursor/missing-test-coverage-4226`, regression tests were added for `SeekMapper.updateDrugs` and `PatientServiceImpl.seek`; `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 3 tests.
 
 ## Credentials
 
