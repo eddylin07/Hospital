@@ -15,4 +15,5 @@
 ## Coverage Automation Notes
 
 - Prior coverage work has targeted `SeekMapper.updateDrugs`, `PatientServiceImpl.seek`, `LoginInterceptor`, and `DrugsUtils`.
+- `LoginControllerTest` covers login session handling: failed authentication must not create a `login` session attribute, while successful authentication stores the authenticated `Login`.
 - Keep new tests focused on risky business logic, validation, parsing, permissions, or shared utilities.
