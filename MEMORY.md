@@ -14,3 +14,4 @@
 ## Automation notes
 
 - `/home/ubuntu/.codex/templates` was not present in this environment, so AGENTS.md and MEMORY.md were bootstrapped locally from inferred project metadata.
+- On branch `cursor/missing-test-coverage-5037`, `SeekMapperXmlTest` covers `SeekMapper.updateDrugs` SQL so prescriptions only update the latest seek row and price accumulation is null-safe; `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 1 test.
