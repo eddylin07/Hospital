@@ -15,6 +15,7 @@
 - Public registration must not create admin users based on blank or missing certificate ids.
 - Prescription dispensing must reject quantities above stock and should use an atomic database update guard to prevent negative inventory under concurrency.
 - Dispensed drug updates should target the latest seek row for a patient, not every historical seek row.
+- On `cursor/critical-bug-investigation-55ce`, fixed failed-login session persistence, server-side role authorization, public admin self-registration, prescription inventory overdraw, latest-seek-row updates, and null seek printing; `mvn test` passed with 7 tests on 2026-07-22.
 
 ## Environment Notes
 
