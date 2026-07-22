@@ -9,8 +9,12 @@ import com.hospital.entity.Seek;
 import com.hospital.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.NoTransactionException;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,32 +86,67 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
+    @Transactional
     public String seek(Patient patient) {
         Seek seek = new Seek();
         String drugsids=patient.getDrugsids();
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
-        for(String drug:drugsids.split(",")){
-          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
-          BigDecimal drugprice=drugs.getPrice();
-          Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
-          Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
+        if (drugsids == null || drugsids.trim().equals("")) {
+            return "请选择药品";
+        }
+        Map<Integer, Integer> requestedDrugs = new LinkedHashMap<>();
+        try {
+            for(String drug:drugsids.split(",")){
+                String[] drugInfo = drug.split("@");
+                if (drugInfo.length != 2) {
+                    return "药品信息错误";
+                }
+                Integer drugId = Integer.parseInt(drugInfo[0]);
+                Integer drugnumber = Integer.parseInt(drugInfo[1]);
+                if (drugnumber <= 0) {
+                    return "药品数量错误";
+                }
+                Integer total = requestedDrugs.get(drugId);
+                requestedDrugs.put(drugId, total == null ? drugnumber : total + drugnumber);
+            }
+        } catch (NumberFormatException e) {
+            return "药品信息错误";
+        }
+        Map<Integer, Drugs> drugsById = new HashMap<>();
+        for(Map.Entry<Integer, Integer> entry:requestedDrugs.entrySet()){
+          Drugs drugs=drugsMapper.selectByPrimaryKey(entry.getKey());
+          if(drugs == null){
+              return "药品信息错误";
           }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
+          Integer realnumber=drugs.getNumber();
+          Integer drugnumber=entry.getValue();
+          if(realnumber == null || realnumber < drugnumber){
+              return "对不起"+drugs.getNumber()+"数量不足";
+          }
+          price=price.add(drugs.getPrice().multiply(BigDecimal.valueOf(drugnumber)));
+          drugsById.put(entry.getKey(), drugs);
+        }
+        for(Map.Entry<Integer, Integer> entry:requestedDrugs.entrySet()){
+          if(drugsMapper.updateNumber(entry.getKey(), entry.getValue()) <= 0){
+              markRollbackOnly();
+              return "对不起"+drugsById.get(entry.getKey()).getNumber()+"数量不足";
           }
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
-        return message;
+        if(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0){
+            return CommonService.upd_message_success;
+        }
+        markRollbackOnly();
+        return CommonService.upd_message_error;
+    }
+
+    private void markRollbackOnly() {
+        try {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        } catch (NoTransactionException ignored) {
+        }
     }
 
     @Override
