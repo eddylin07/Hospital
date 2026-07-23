@@ -10,6 +10,7 @@
 
 - Existing automation memory indicates prior coverage work used focused JUnit 4/Mockito tests and XML mapper parsing tests.
 - Avoid database-dependent tests unless a local test database/fixture is explicitly available.
+- On branch `cursor/missing-test-coverage-9693`, coverage was added for `SeekMapper.updateDrugs` and `PatientServiceImpl.seek`. The mapper now updates only the latest seek row and uses null-safe price accumulation; the service now stops writes when requested drug quantity exceeds stock.
 
 ## Credentials
 
