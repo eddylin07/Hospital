@@ -58,7 +58,10 @@ public class PDFUtils {
         try {
             String str="";
             for(int i=0;i<options.size();i++){
-                str+=options.get(i).getName()+"----"+options.get(i).getType()+"("+options.get(i).getPrice()+"元)\n";
+                Option option=options.get(i);
+                if(option!=null){
+                    str+=option.getName()+"----"+option.getType()+"("+option.getPrice()+"元)\n";
+                }
             }
             PdfWriter.getInstance(document, new FileOutputStream(path+seek.getPatientname()+DateUtils.date2String(new Date())+"就诊单.pdf"));
             document.open();
