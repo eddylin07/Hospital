@@ -15,3 +15,4 @@
 ## Session notes
 
 - 2026-07-24: Initialized local project instruction and memory files because both were missing and the template directory was unavailable.
+- 2026-07-24: Added regression coverage for failed-login session handling, drug dispensing stock/price behavior, and latest-seek-only prescription SQL; `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 5 tests.
