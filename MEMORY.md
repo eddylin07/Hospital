@@ -14,3 +14,5 @@
 ## Coverage Automation Notes
 
 - Prior automation memory indicates this repository often lacks checked-in tests and has recurring risk around login session handling, patient dispensing, and `SeekMapper.updateDrugs` SQL.
+- On branch `cursor/missing-test-coverage-ce25`, regression coverage was added for `LoginController.login`, `LoginInterceptor.preHandle`, `PatientServiceImpl.seek`, and `SeekMapper.updateDrugs`; production fixes restrict failed-login sessions, prevent insufficient-stock writes, and update only the latest seek row with null-safe price accumulation.
+- Validation passed with `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` running 7 tests.
