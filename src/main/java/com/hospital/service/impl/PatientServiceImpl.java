@@ -88,26 +88,28 @@ public class PatientServiceImpl implements PatientService {
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
-        for(String drug:drugsids.split(",")){
-          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
-          BigDecimal drugprice=drugs.getPrice();
-          Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
+        String[] drugItems = drugsids.split(",");
+        Drugs[] selectedDrugs = new Drugs[drugItems.length];
+        Integer[] requestedNumbers = new Integer[drugItems.length];
+        for(int i = 0; i < drugItems.length; i++){
+          String[] drugInfo = drugItems[i].split("@");
+          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drugInfo[0]));
+          Integer drugnumber=Integer.parseInt(drugInfo[1]);
           Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
+          if(realnumber == null || realnumber < drugnumber){
+              return "对不起"+realnumber+"数量不足";
           }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
-          }
+          selectedDrugs[i] = drugs;
+          requestedNumbers[i] = drugnumber;
+          price=price.add(drugs.getPrice().multiply(BigDecimal.valueOf(drugnumber)));
+        }
+        for(int i = 0; i < selectedDrugs.length; i++){
+            Drugs drugs = selectedDrugs[i];
+            drugs.setNumber(requestedNumbers[i]);
+            drugsMapper.updateNumber(drugs);
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
-        return message;
+        return (patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
     }
 
     @Override
