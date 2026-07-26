@@ -14,3 +14,4 @@
 ## Critical bug investigation notes
 
 - Persistent automation memory says prior critical fixes in this repository repeatedly involved login session persistence, role authorization, public admin registration, prescription inventory overdraw, latest seek-row updates, null seek printing, empty drug/option input crashes, missing appointment PDF crash, and Maven dependency pinning.
+- On 2026-07-26 branch `cursor/critical-bug-investigation-abca`, the current master still had those critical auth/registration/dispensing issues; this branch also fixed patient appointment creation to ignore request-body `patientid` and bind writes to the session patient. `mvn test` passed with 13 tests after installing Maven.
