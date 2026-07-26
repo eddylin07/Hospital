@@ -94,9 +94,9 @@ public class PatientServiceImpl implements PatientService {
           BigDecimal drugprice=drugs.getPrice();
           Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
           Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
+          if(realnumber == null || realnumber < drugnumber){
               message="对不起"+drugs.getNumber()+"数量不足";
-              break;
+              return message;
           }
           else {
               drugs.setNumber(drugnumber);
