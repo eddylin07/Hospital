@@ -22,3 +22,4 @@
 ## Current session
 
 - Created this file on 2026-07-27 because the project root lacked `MEMORY.md` and the configured template directory was unavailable.
+- On `cursor/critical-bug-investigation-58d2`, fixed failed-login session persistence, public admin self-registration, role authorization, prescription inventory overdraw/latest-seek-row updates, patient appointment IDOR, empty drug/option input crashes, missing appointment/seek PDF crashes, and Java 21 Maven test compatibility; `mvn test` passed with 8 tests on 2026-07-27 after installing Maven.
