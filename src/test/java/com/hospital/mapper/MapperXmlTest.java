@@ -37,7 +37,7 @@ public class MapperXmlTest {
                 .toLowerCase(Locale.ENGLISH)
                 .replace(" ", "");
 
-        assertTrue(compactSql.contains("updatesek"));
+        assertTrue(compactSql.contains("updateseek"));
         assertTrue(compactSql.contains("setdrugs=?,price=ifnull(price,0)+?"));
         assertTrue(compactSql.contains("wherepatientid=?orderbyiddesclimit1"));
     }
