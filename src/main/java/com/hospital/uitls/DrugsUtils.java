@@ -13,10 +13,13 @@ public class DrugsUtils {
             String value = (String) entry.getValue();
             String[] _key = key.split("_");
             if (_key.length > 1) {
-                if (_key[1].equals("number") && !value.equals("")) {
+                if (_key[1].equals("number") && value!=null && !value.trim().equals("")) {
                     ids += (_key[0] + "@" + value) + ",";
                 }
             }
+        }
+        if(ids.equals("")){
+            return "";
         }
         ids = ids.substring(0, ids.length() - 1);
         return ids;
@@ -29,9 +32,12 @@ public class DrugsUtils {
             Map.Entry entry = (Map.Entry) entries.next();
             String key = (String) entry.getKey();
             String value = (String) entry.getValue();
-            if (key.split("_")[0].equals("option")) {
+            if (key.split("_")[0].equals("option") && value!=null && !value.trim().equals("")) {
                 ids += value + ",";
             }
+        }
+        if(ids.equals("")){
+            return "";
         }
         return ids.substring(0, ids.length() - 1);
     }

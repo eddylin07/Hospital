@@ -91,7 +91,12 @@ public class DoctorController {
     public JSONObject drug(@RequestBody Map map){
         JSONObject json=new JSONObject();
         Patient patient=new Patient();
-        patient.setDrugsids(DrugsUtils.vaild(map));
+        String drugsids=DrugsUtils.vaild(map);
+        if(drugsids.equals("")){
+            json.put("message","请选择药品");
+            return json;
+        }
+        patient.setDrugsids(drugsids);
         patient.setId(Integer.parseInt((String)map.get("patientid")));
         json.put("message",patientService.seek(patient));
         return json;
@@ -131,6 +136,10 @@ public class DoctorController {
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
         JSONObject json=new JSONObject();
         Seek seek=seekService.getSeekByPatientId(id);
+        if(seek==null){
+            json.put("message","暂无就诊信息，生成失败");
+            return json;
+        }
         seek.setPatientname(patientService.getPatient(id).getName());
         seek.setDoctorname(doctor.getName());
         //createSeekInfo，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录

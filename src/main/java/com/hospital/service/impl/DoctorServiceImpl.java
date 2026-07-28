@@ -94,11 +94,28 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     public String seekInfo(Map map) {
         Seek seek=new Seek();
-        seek.setOptions(DrugsUtils.vaild2(map));
-        seek.setDays(Integer.parseInt((String)map.get("days")));
+        String options=DrugsUtils.vaild2(map);
+        if(options.equals("")){
+            return "请选择检查项目";
+        }
+        seek.setOptions(options);
+        String days=(String)map.get("days");
+        if(days==null||days.trim().equals("")){
+            seek.setDays(0);
+        }else {
+            try{
+                seek.setDays(Integer.parseInt(days));
+            }catch (NumberFormatException e){
+                return "住院天数错误";
+            }
+        }
         seek.setDescribes((String)map.get("describes"));
         seek.setIllname((String)map.get("illname"));
-        seek.setPatientid(Integer.parseInt((String)map.get("patientid")));
+        try{
+            seek.setPatientid(Integer.parseInt((String)map.get("patientid")));
+        }catch (NumberFormatException e){
+            return "患者信息错误";
+        }
         BigDecimal price=optionMapper.getTotalPrice(PatientDoctorutils.getOptionIds(seek.getOptions()));
         seek.setPrice(price);
         Integer index=seekMapper.insert(seek);
