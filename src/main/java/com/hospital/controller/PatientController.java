@@ -1,6 +1,7 @@
 package com.hospital.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hospital.common.CommonService;
 import com.hospital.entity.Appointment;
 import com.hospital.entity.Hospitalization;
 import com.hospital.entity.Login;
@@ -97,13 +98,21 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject appointment(@RequestBody Appointment appointment){
+    public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
+        Patient currentPatient=getCurrentPatient(session);
+        if(currentPatient==null){
+            json.put("message",CommonService.add_message_error);
+            return json;
+        }
         Patient patient=new Patient();
+        appointment.setPatientid(currentPatient.getId());
         String message=appointmentService.addAppointment(appointment);
-        patient.setAppointmentid(appointmentService.selectTheLastAppointment(appointment.getPatientid()));
-        patient.setId(appointment.getPatientid());
-        patientService.updateAppointMent(patient);
+        if(CommonService.add_message_success.equals(message)){
+            patient.setAppointmentid(appointmentService.selectTheLastAppointment(currentPatient.getId()));
+            patient.setId(currentPatient.getId());
+            patientService.updateAppointMent(patient);
+        }
         json.put("message",message);
         return json;
     }
@@ -126,12 +135,31 @@ public class PatientController {
     @ResponseBody
     public JSONObject downloadpdf(HttpSession session){
         JSONObject json=new JSONObject();
-        Login login=(Login)session.getAttribute("login");
-        Patient patient=patientService.findPatientByLoginId(login.getId());
+        Patient patient=getCurrentPatient(session);
+        if(patient==null){
+            json.put("message","未找到患者信息，生成失败");
+            return json;
+        }
         Integer idlast=appointmentService.selectTheLastAppointment(patient.getId());
+        if(idlast==null){
+            json.put("message","未找到预约信息，生成失败");
+            return json;
+        }
         Appointment appointment=appointmentService.getAppointment(idlast);
+        if(appointment==null){
+            json.put("message","未找到预约信息，生成失败");
+            return json;
+        }
         //createAppointMent，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         json.put("message",PDFUtils.createAppointMent(appointment,path));
         return json;
+    }
+
+    private Patient getCurrentPatient(HttpSession session){
+        Login login=(Login)session.getAttribute("login");
+        if(login==null||login.getId()==null){
+            return null;
+        }
+        return patientService.findPatientByLoginId(login.getId());
     }
 }

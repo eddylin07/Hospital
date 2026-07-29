@@ -131,8 +131,17 @@ public class DoctorController {
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
         JSONObject json=new JSONObject();
         Seek seek=seekService.getSeekByPatientId(id);
-        seek.setPatientname(patientService.getPatient(id).getName());
-        seek.setDoctorname(doctor.getName());
+        if(seek==null){
+            json.put("message","未找到就诊信息，生成失败");
+            return json;
+        }
+        Patient patient=patientService.getPatient(id);
+        if(patient==null){
+            json.put("message","未找到患者信息，生成失败");
+            return json;
+        }
+        seek.setPatientname(patient.getName());
+        seek.setDoctorname(doctor==null?"":doctor.getName());
         //createSeekInfo，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         String message= PDFUtils.createSeekInfo(seek,optionService,path);
         json.put("message",message);

@@ -83,10 +83,14 @@ public class HospitalizationController {
             row.createCell(5).setCellValue(hospitalization.getMedicalname());
             HSSFCell cell1 = row.createCell(6);
             HSSFCell cell2 = row.createCell(7);
-            cell1.setCellValue(hospitalization.getIntime());
-            cell2.setCellValue(hospitalization.getOuttime());
-            cell1.setCellStyle(style);
-            cell2.setCellStyle(style);
+            if(hospitalization.getIntime()!=null){
+                cell1.setCellValue(hospitalization.getIntime());
+                cell1.setCellStyle(style);
+            }
+            if(hospitalization.getOuttime()!=null){
+                cell2.setCellValue(hospitalization.getOuttime());
+                cell2.setCellStyle(style);
+            }
             rowNum++;
         }
 

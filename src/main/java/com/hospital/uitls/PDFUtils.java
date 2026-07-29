@@ -48,11 +48,16 @@ public class PDFUtils {
 //        createSeekInfo(new Seek("浑身不舒服","花柳病","1,2,3,4,5",12,new BigDecimal("32.6"),"张安"));
 //    }
     public static String createSeekInfo(Seek seek, OptionService optionService, String path) {
+        if(seek==null){
+            return "未找到就诊信息，生成失败";
+        }
         List ids=PatientDoctorutils.getOptionIds(seek.getOptions());
         List<Option> options=new ArrayList<>();
         ids.forEach(id->{
           Option option =optionService.getOption((Integer)id);
-            options.add(option);
+            if(option!=null){
+                options.add(option);
+            }
         });
         Document document = new Document();
         try {
@@ -92,6 +97,9 @@ public class PDFUtils {
     }
 
     public static String createAppointMent(Appointment appointment,String path) {
+        if(appointment==null){
+            return "未找到预约信息，生成失败";
+        }
         Document document = new Document();
         try {
             PdfWriter.getInstance(document, new FileOutputStream(path+appointment.getPatientname()+DateUtils.date2String(new Date())+"挂号单.pdf"));
