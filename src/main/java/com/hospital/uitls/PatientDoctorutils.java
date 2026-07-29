@@ -69,6 +69,9 @@ public class PatientDoctorutils {
     }
     public static List<Integer> getOptionIds(String ids){
         List<Integer> integerList=new ArrayList<>();
+        if(ids==null||ids.trim().equals("")){
+            return integerList;
+        }
         String[] idarray=ids.split(",");
         if (idarray.length==0){
             integerList.add(Integer.parseInt(ids));
@@ -76,7 +79,9 @@ public class PatientDoctorutils {
         }else{
         integerList.clear();
             for(String id:idarray){
-                integerList.add(Integer.parseInt(id));
+                if(!id.trim().equals("")){
+                    integerList.add(Integer.parseInt(id));
+                }
             }
             return integerList;
         }
