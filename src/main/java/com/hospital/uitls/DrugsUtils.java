@@ -6,7 +6,7 @@ import java.util.Map;
 public class DrugsUtils {
     public static String vaild(Map map) {
         Iterator entries = map.entrySet().iterator();
-        String ids = "";
+        StringBuilder ids = new StringBuilder();
         while (entries.hasNext()) {
             Map.Entry entry = (Map.Entry) entries.next();
             String key = (String) entry.getKey();
@@ -14,24 +14,29 @@ public class DrugsUtils {
             String[] _key = key.split("_");
             if (_key.length > 1) {
                 if (_key[1].equals("number") && !value.equals("")) {
-                    ids += (_key[0] + "@" + value) + ",";
+                    ids.append(_key[0]).append("@").append(value).append(",");
                 }
             }
         }
-        ids = ids.substring(0, ids.length() - 1);
-        return ids;
+        if(ids.length()==0){
+            return "";
+        }
+        return ids.substring(0, ids.length() - 1);
     }
 
     public static String vaild2(Map map) {
         Iterator entries = map.entrySet().iterator();
-        String ids = "";
+        StringBuilder ids = new StringBuilder();
         while (entries.hasNext()) {
             Map.Entry entry = (Map.Entry) entries.next();
             String key = (String) entry.getKey();
             String value = (String) entry.getValue();
             if (key.split("_")[0].equals("option")) {
-                ids += value + ",";
+                ids.append(value).append(",");
             }
+        }
+        if(ids.length()==0){
+            return "";
         }
         return ids.substring(0, ids.length() - 1);
     }
