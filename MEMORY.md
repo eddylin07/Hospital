@@ -16,6 +16,7 @@
 
 - Prior coverage runs repeatedly found risk around login session handling, interceptor authentication gates, prescription/dispensing inventory logic, mapper XML update scope, null-safe price accumulation, and drug form parsing.
 - Keep tests minimal and behavior-focused; only change production code when a test exposes a real regression risk.
+- On branch `cursor/missing-test-coverage-8b42`, tests were added for failed/successful login session behavior, dispensing inventory and price calculation, insufficient/non-positive stock no-write behavior, and `SeekMapper.updateDrugs` latest-record/null-price SQL. `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 6 tests after installing Maven/JDK 8.
 
 ## External resource locations
 
