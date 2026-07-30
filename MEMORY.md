@@ -12,3 +12,4 @@
 ## Review Notes
 
 - For deep bug-finding automation, focus on recent behavioral changes and only open a PR for concrete critical bugs with a high-confidence minimal fix.
+- On branch `cursor/critical-bug-investigation-8c11`, fixed critical failed-login session persistence, server-side role enforcement, public admin self-registration, patient appointment IDOR, prescription inventory/seek-row corruption, empty drug/option crashes, Linux PDF output path handling, and Java 21 Maven test compatibility; `mvn test` passed with 7 tests on 2026-07-30.
