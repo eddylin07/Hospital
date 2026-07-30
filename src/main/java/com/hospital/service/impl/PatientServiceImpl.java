@@ -88,25 +88,26 @@ public class PatientServiceImpl implements PatientService {
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
         for(String drug:drugsids.split(",")){
-          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
-          BigDecimal drugprice=drugs.getPrice();
-          Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
+          String[] drugInfo = drug.split("@");
+          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drugInfo[0]));
+          Integer drugnumber=Integer.parseInt(drugInfo[1]);
           Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
+          if(drugnumber <= 0 || realnumber == null || realnumber < drugnumber){
+              return "对不起"+drugs.getNumber()+"数量不足";
           }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
-          }
+          BigDecimal drugprice=drugs.getPrice();
+          price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
+        }
+        for(String drug:drugsids.split(",")){
+          String[] drugInfo = drug.split("@");
+          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drugInfo[0]));
+          Integer drugnumber=Integer.parseInt(drugInfo[1]);
+          drugs.setNumber(drugnumber);
+          drugsMapper.updateNumber(drugs);
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
+        String message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
         return message;
     }
 
