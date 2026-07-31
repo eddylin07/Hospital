@@ -12,6 +12,11 @@
             <artifactId>spring-boot-starter-parent</artifactId>
             <version>2.0.0.RELEASE</version>
     </parent>
+    <properties>
+        <lombok.version>1.18.46</lombok.version>
+        <poi.version>5.5.1</poi.version>
+        <maven-surefire-plugin.version>3.6.0-M1</maven-surefire-plugin.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.mybatis.generator</groupId>
@@ -45,7 +50,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.16.22</version>
+            <version>${lombok.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -73,12 +78,12 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>RELEASE</version>
+            <version>${poi.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>RELEASE</version>
+            <version>${poi.version}</version>
         </dependency>
         <dependency>
             <groupId>com.itextpdf</groupId>
@@ -91,4 +96,13 @@
             <version>5.2.0</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>
