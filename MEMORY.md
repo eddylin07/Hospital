@@ -20,3 +20,4 @@
 ## Update Log
 
 - 2026-08-01: Initialized local memory because `~/.codex/templates/` was unavailable in this environment.
+- 2026-08-01: Fixed critical failed-login session persistence, server-side role authorization, public admin self-registration, patient appointment IDOR, prescription inventory overdraw/race, and latest-seek-row update bugs on `cursor/critical-bug-investigation-98ce`; `mvn test` passed with 11 tests after installing Maven.
