@@ -21,3 +21,5 @@ Initialized: 2026-08-01
 
 - Prefer tests for business behavior with regression risk: authentication/session handling, mapper SQL, parsing utilities, inventory/dispensing, permissions, and data validation.
 - Avoid database-dependent tests unless the project already provides stable fixtures.
+- On branch `cursor/missing-test-coverage-7a69`, coverage was added for login session handling, interceptor allow/redirect behavior, dispensing stock/price updates, insufficient-stock no-write behavior, latest-seek-only/null-safe prescription SQL, and drug price/number/text result mapping.
+- `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 8 tests on 2026-08-01.
