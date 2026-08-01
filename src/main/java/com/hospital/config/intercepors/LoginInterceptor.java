@@ -12,6 +12,9 @@ import javax.servlet.http.HttpSession;
  
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
+    private static final int ADMIN_ROLE = 1;
+    private static final int DOCTOR_ROLE = 2;
+    private static final int PATIENT_ROLE = 3;
  
     //这个方法是在访问接口之前执行的，我们只需要在这里写验证登陆状态的业务逻辑，就可以在用户调用指定接口之前验证登陆状态了
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -25,9 +28,28 @@ public class LoginInterceptor implements HandlerInterceptor {
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+        if (!hasRequiredRole(request.getRequestURI(), request.getContextPath(), login.getRole())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean hasRequiredRole(String requestUri, String contextPath, Integer role) {
+        String path = contextPath == null || contextPath.equals("") ? requestUri : requestUri.substring(contextPath.length());
+        if (path.startsWith("/admin/") || path.equals("/hospital/admin/index")) {
+            return role != null && role == ADMIN_ROLE;
+        }
+        if (path.startsWith("/patient/") || path.equals("/hospital/patient/index")) {
+            return role != null && role == PATIENT_ROLE;
+        }
+        if (path.equals("/hospital/doctor/index") || path.equals("/doctor/seekMedicalAdvice") || path.startsWith("/doctor/seek/")
+                || path.equals("/doctor/drug") || path.equals("/doctor/zation") || path.startsWith("/doctor/medicalhistory/")
+                || path.equals("/doctor/seekinfo") || path.startsWith("/doctor/printseek/")) {
+            return role != null && role == DOCTOR_ROLE;
+        }
+        return true;
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
