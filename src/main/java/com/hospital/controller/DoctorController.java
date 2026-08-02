@@ -1,6 +1,7 @@
 package com.hospital.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hospital.common.CommonService;
 import com.hospital.entity.*;
 import com.hospital.service.*;
 import com.hospital.uitls.DrugsUtils;
@@ -131,7 +132,12 @@ public class DoctorController {
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
         JSONObject json=new JSONObject();
         Seek seek=seekService.getSeekByPatientId(id);
-        seek.setPatientname(patientService.getPatient(id).getName());
+        Patient patient=patientService.getPatient(id);
+        if(seek==null||patient==null||doctor==null){
+            json.put("message", CommonService.add_message_error);
+            return json;
+        }
+        seek.setPatientname(patient.getName());
         seek.setDoctorname(doctor.getName());
         //createSeekInfo，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         String message= PDFUtils.createSeekInfo(seek,optionService,path);

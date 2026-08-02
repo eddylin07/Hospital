@@ -12,6 +12,9 @@ import javax.servlet.http.HttpSession;
  
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
+    private static final int ROLE_ADMIN = 1;
+    private static final int ROLE_DOCTOR = 2;
+    private static final int ROLE_PATIENT = 3;
  
     //这个方法是在访问接口之前执行的，我们只需要在这里写验证登陆状态的业务逻辑，就可以在用户调用指定接口之前验证登陆状态了
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -25,9 +28,44 @@ public class LoginInterceptor implements HandlerInterceptor {
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+        if (!isAuthorized(request, login)){
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;    //如果session里有login且角色匹配，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean isAuthorized(HttpServletRequest request, Login login) {
+        if (login.getId() == null || login.getRole() == null) {
+            return false;
+        }
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isEmpty() && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+        if (path.startsWith("/admin/")) {
+            return login.getRole() == ROLE_ADMIN;
+        }
+        if (path.startsWith("/patient/")) {
+            return login.getRole() == ROLE_PATIENT;
+        }
+        if (isDoctorWorkflow(path, request.getMethod())) {
+            return login.getRole() == ROLE_DOCTOR;
+        }
+        return true;
+    }
+
+    private boolean isDoctorWorkflow(String path, String method) {
+        if (!path.startsWith("/doctor/")) {
+            return false;
+        }
+        if ("GET".equalsIgnoreCase(method) && path.matches("^/doctor/[^/]+$")
+                && !"/doctor/seekMedicalAdvice".equals(path)) {
+            return false;
+        }
+        return true;
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
