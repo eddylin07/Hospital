@@ -63,8 +63,14 @@ public class LoginController {
     @ResponseBody
     public JSONObject login(@RequestBody Login login,HttpSession session){
         JSONObject json=new JSONObject();
-        json.put("message",loginService.login(login));
-        session.setAttribute("login",login);
+        String message=loginService.login(login);
+        json.put("message",message);
+        if(login.getId()!=null&&login.getRole()!=null){
+            session.setAttribute("login",login);
+        }
+        else{
+            session.removeAttribute("login");
+        }
         return json;
     }
     @RequestMapping(value = "/regest",method = RequestMethod.POST)

@@ -81,7 +81,7 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
   <update id="updateNumber" parameterType="com.hospital.entity.Drugs">
-    update drugs set number=number-#{number} where id=#{id}
+    update drugs set number=number-#{number} where id=#{id} and number &gt;= #{number}
   </update>
   <select id="getDrugsByName" resultType="com.hospital.entity.Drugs" parameterType="String">
     select * from drugs where name like concat('%',#{name},'%')
