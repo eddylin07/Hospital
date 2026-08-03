@@ -19,3 +19,8 @@
 
 - High-value regression tests in this repository usually cover controller session behavior, interceptor authentication behavior, service validation around prescriptions/inventory, mapper XML SQL invariants, and shared form parsing utilities.
 - Keep tests deterministic and avoid depending on a live database or web server unless strictly necessary.
+
+## Current Coverage Notes
+
+- On branch `cursor/missing-test-coverage-0825`, regression coverage was added for login session handling, anonymous interceptor redirects, prescription inventory/price calculations, no partial inventory writes when any requested drug is unavailable, latest-seek-only/null-safe prescription SQL, and drug mapper dispensing fields.
+- `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 9 tests after installing Maven and OpenJDK 8.
