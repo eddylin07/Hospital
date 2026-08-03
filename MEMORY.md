@@ -12,6 +12,7 @@
 - Start each task by reading `AGENTS.md` and `MEMORY.md`.
 - For critical bug investigations, inspect recent behavioral commits and only fix issues with a concrete high-severity trigger.
 - Credentials should be remembered by location only, never by value.
+- On 2026-08-03 branch `cursor/critical-bug-investigation-776d`, critical fixes covered failed-login session persistence, server-side role authorization, public admin self-registration, patient appointment IDOR, prescription inventory overdraw/race, and latest-seek-row updates; `mvn test` passed with 9 tests after installing Maven in the cloud image.
 
 ## Unknowns
 
