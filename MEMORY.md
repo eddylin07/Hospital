@@ -12,3 +12,4 @@
 
 - Prior coverage runs found high-value regressions around login session handling, interceptor access control, prescription dispensing, mapper XML SQL, and drug form parsing.
 - Favor focused JUnit 4/Mockito tests and MyBatis XML parsing tests that do not require a live database.
+- On branch `cursor/missing-test-coverage-e2e7`, added focused tests for `LoginInterceptor`, `PatientServiceImpl.seek`, and `DrugsUtils`; `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 5 tests.
