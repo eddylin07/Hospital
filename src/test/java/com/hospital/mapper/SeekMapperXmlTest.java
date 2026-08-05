@@ -1,6 +1,8 @@
 package com.hospital.mapper;
 
 import com.hospital.dao.SeekMapper;
+import com.hospital.dao.DrugsMapper;
+import com.hospital.entity.Drugs;
 import com.hospital.entity.Seek;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.mapping.BoundSql;
@@ -16,7 +18,7 @@ public class SeekMapperXmlTest {
 
     @Test
     public void updateDrugsOnlyTargetsLatestSeekForPatient() {
-        Configuration configuration = loadSeekMapperConfiguration();
+        Configuration configuration = loadMapperConfiguration(SeekMapper.class, "/mapper/SeekMapper.xml");
         Seek seek = new Seek();
         seek.setPatientid(1);
 
@@ -30,17 +32,33 @@ public class SeekMapperXmlTest {
         assertTrue(normalizedSql.endsWith("limit 1"));
     }
 
-    private Configuration loadSeekMapperConfiguration() {
-        Configuration configuration = new Configuration();
-        configuration.addMapper(SeekMapper.class);
+    @Test
+    public void updateNumberRequiresEnoughRemainingStock() {
+        Configuration configuration = loadMapperConfiguration(DrugsMapper.class, "/mapper/DrugsMapper.xml");
+        Drugs drugs = new Drugs();
+        drugs.setId(1);
+        drugs.setNumber(3);
 
-        InputStream mapperXml = getClass().getResourceAsStream("/mapper/SeekMapper.xml");
+        BoundSql boundSql = configuration
+                .getMappedStatement("com.hospital.dao.DrugsMapper.updateNumber")
+                .getBoundSql(drugs);
+
+        String normalizedSql = boundSql.getSql().toLowerCase().replaceAll("\\s+", " ").trim();
+        assertTrue(normalizedSql.contains("set number=number-?"));
+        assertTrue(normalizedSql.contains("where id=? and number >= ?"));
+    }
+
+    private Configuration loadMapperConfiguration(Class<?> mapperClass, String resourcePath) {
+        Configuration configuration = new Configuration();
+        configuration.addMapper(mapperClass);
+
+        InputStream mapperXml = getClass().getResourceAsStream(resourcePath);
         assertNotNull(mapperXml);
 
         XMLMapperBuilder mapperBuilder = new XMLMapperBuilder(
                 mapperXml,
                 configuration,
-                "mapper/SeekMapper.xml",
+                resourcePath,
                 configuration.getSqlFragments());
         mapperBuilder.parse();
         return configuration;
