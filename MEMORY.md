@@ -10,6 +10,7 @@
 
 - Recurring high-severity paths: login session persistence, server-side role authorization, public registration role assignment, patient appointment ownership, prescription inventory updates, latest seek-row updates, and PDF/export null handling.
 - Historical automation memory notes that Maven may be missing in Cursor Cloud and Java 21 may require dependency/test-runner compatibility fixes.
+- On branch `cursor/critical-bug-investigation-9d80`, fixed critical failures in login session persistence, role authorization, public registration, patient appointment ownership, prescription stock updates, and latest seek-row updates; `mvn test` passed with 12 tests on 2026-08-06.
 
 ## Environment notes
 
