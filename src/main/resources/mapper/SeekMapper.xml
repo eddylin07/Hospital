@@ -26,9 +26,11 @@
     values (#{patientid},#{describes},#{illname},#{drugs},#{options},#{days},#{price})
   </insert>
   <update id="updateDrugs" parameterType="com.hospital.entity.Seek">
-     update seek
-     set drugs=#{drugs},price=price+#{price}
-     where patientid=#{patientid}
+     update seek s
+     join (
+       select id from seek where patientid=#{patientid} order by id desc limit 1
+     ) latest on s.id=latest.id
+     set s.drugs=#{drugs},s.price=s.price+#{price}
   </update>
 
 </mapper>
