@@ -25,4 +25,4 @@
 
 ## Run Notes
 
-- On `cursor/critical-bug-investigation-ad0e` (2026-08-07), fixed failed-login session persistence, server-side role authorization, public admin self-registration, username-conflict registration linking, patient appointment IDOR, prescription inventory overdraw/race/partial-update protection, latest-seek-row prescription updates, and empty drug/option input crashes; `mvn test` passed with 11 tests.
+- On `cursor/critical-bug-investigation-ad0e` (2026-08-07), fixed failed-login session persistence, server-side role authorization, public admin self-registration, username-conflict registration linking, patient appointment IDOR, prescription inventory overdraw/race/partial-update protection, latest-seek-row prescription updates, empty drug/option input crashes, and missing appointment/seek PDF crashes; `mvn test` passed with 13 tests.
