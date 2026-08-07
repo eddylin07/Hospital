@@ -38,6 +38,23 @@ public class PatientControllerTest {
         assertEquals(Integer.valueOf(44), patientService.updatedAppointmentPatient.getAppointmentid());
     }
 
+    @Test
+    public void downloadPdfWithoutAppointmentReturnsBusinessMessage() {
+        PatientController controller = new PatientController();
+        FakePatientService patientService = new FakePatientService();
+        FakeAppointmentService appointmentService = new FakeAppointmentService();
+        appointmentService.lastAppointment = null;
+        controller.patientService = patientService;
+        controller.appointmentService = appointmentService;
+        MockHttpSession session = new MockHttpSession();
+        Login login = new Login();
+        login.setId(501);
+        login.setRole(3);
+        session.setAttribute("login", login);
+
+        assertEquals("暂无预约单", controller.downloadpdf(session).get("message"));
+    }
+
     private static class FakePatientService implements PatientService {
         private Patient updatedAppointmentPatient;
 
@@ -97,6 +114,7 @@ public class PatientControllerTest {
 
     private static class FakeAppointmentService implements AppointmentService {
         private Appointment inserted;
+        private Integer lastAppointment = 44;
 
         @Override
         public List<Appointment> getAllAppointments() {
@@ -141,7 +159,7 @@ public class PatientControllerTest {
 
         @Override
         public Integer selectTheLastAppointment(Integer patientId) {
-            return 44;
+            return lastAppointment;
         }
     }
 }
