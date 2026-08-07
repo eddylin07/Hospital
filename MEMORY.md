@@ -22,3 +22,7 @@
 
 - Cursor Cloud may not have Maven installed by default. If `mvn` is missing, install Maven before running tests.
 - Older Lombok/Surefire versions can fail on Java 21; prior successful branches used Lombok 1.18.46 and Surefire 3.6.0-M1.
+
+## Run Notes
+
+- On `cursor/critical-bug-investigation-ad0e` (2026-08-07), fixed failed-login session persistence, server-side role authorization, public admin self-registration, username-conflict registration linking, patient appointment IDOR, prescription inventory overdraw/race/partial-update protection, latest-seek-row prescription updates, and empty drug/option input crashes; `mvn test` passed with 11 tests.
