@@ -28,7 +28,7 @@
   <update id="updateDrugs" parameterType="com.hospital.entity.Seek">
      update seek
      set drugs=#{drugs},price=price+#{price}
-     where patientid=#{patientid}
+     where id=#{id}
   </update>
 
 </mapper>

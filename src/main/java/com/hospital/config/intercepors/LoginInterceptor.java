@@ -12,6 +12,9 @@ import javax.servlet.http.HttpSession;
  
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
+    private static final int ADMIN_ROLE = 1;
+    private static final int DOCTOR_ROLE = 2;
+    private static final int PATIENT_ROLE = 3;
  
     //这个方法是在访问接口之前执行的，我们只需要在这里写验证登陆状态的业务逻辑，就可以在用户调用指定接口之前验证登陆状态了
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -25,9 +28,49 @@ public class LoginInterceptor implements HandlerInterceptor {
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+        if (!hasRequiredRole(request, login)) {
+            response.sendRedirect("/hospital/login");
+            return false;
+        }
+        return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean hasRequiredRole(HttpServletRequest request, Login login) {
+        Integer role = login.getRole();
+        if (role == null) {
+            return false;
+        }
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.equals("") && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+        if (path.startsWith("/admin/")) {
+            return role == ADMIN_ROLE;
+        }
+        if (path.startsWith("/patient/")) {
+            return role == PATIENT_ROLE;
+        }
+        if (path.startsWith("/doctor/")) {
+            return isDoctorLookup(request, path) || role == DOCTOR_ROLE;
+        }
+        if (path.startsWith("/hospital/admin/")) {
+            return role == ADMIN_ROLE;
+        }
+        if (path.startsWith("/hospital/doctor/")) {
+            return role == DOCTOR_ROLE;
+        }
+        if (path.startsWith("/hospital/patient/")) {
+            return role == PATIENT_ROLE;
+        }
+        return true;
+    }
+
+    private boolean isDoctorLookup(HttpServletRequest request, String path) {
+        return "GET".equalsIgnoreCase(request.getMethod())
+                && path.matches("/doctor/[^/]+")
+                && !"/doctor/seekMedicalAdvice".equals(path);
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
