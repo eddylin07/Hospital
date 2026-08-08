@@ -94,7 +94,11 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     public String seekInfo(Map map) {
         Seek seek=new Seek();
-        seek.setOptions(DrugsUtils.vaild2(map));
+        String options=DrugsUtils.vaild2(map);
+        if(options.equals("")){
+            return CommonService.add_message_error;
+        }
+        seek.setOptions(options);
         seek.setDays(Integer.parseInt((String)map.get("days")));
         seek.setDescribes((String)map.get("describes"));
         seek.setIllname((String)map.get("illname"));

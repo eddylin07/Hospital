@@ -27,6 +27,14 @@ public class CriticalMapperSqlTest {
         assertTrue(sql.contains("select id from seek where patientid=#{patientid} order by id desc limit 1"));
     }
 
+    @Test
+    public void pdfOutputDefaultsToRelativeDirectory() throws Exception {
+        String applicationYaml = resource("application.yml");
+
+        assertTrue(applicationYaml.contains("appointpdf: ./pdf/"));
+        assertTrue(applicationYaml.contains("seekpdfpath: ./pdf/"));
+    }
+
     private static String resource(String path) throws Exception {
         ClassPathResource resource = new ClassPathResource(path);
         try (InputStream inputStream = resource.getInputStream();

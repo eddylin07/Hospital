@@ -1,6 +1,7 @@
 package com.hospital.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hospital.common.CommonService;
 import com.hospital.entity.*;
 import com.hospital.service.*;
 import com.hospital.uitls.DrugsUtils;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -80,7 +82,10 @@ public class DoctorController {
         return "doctor/seekMedicalAdvice";
     }
     @RequestMapping("/doctor/seek/{id}")
-    public String seek(@PathVariable Integer id,HttpServletRequest request){
+    public String seek(@PathVariable Integer id,HttpServletRequest request,HttpSession session){
+        if(!canCurrentDoctorAccessPatient(session,id)){
+            return "redirect:/doctor/seekMedicalAdvice";
+        }
         request.setAttribute("options",optionService.getAll());
         request.setAttribute("patient",patientService.getPatient(id));
         request.setAttribute("drugs",drugsService.getAllDrugs());
@@ -88,11 +93,16 @@ public class DoctorController {
     }
     @RequestMapping(value = "/doctor/drug",method = RequestMethod.PUT)
     @ResponseBody
-    public JSONObject drug(@RequestBody Map map){
+    public JSONObject drug(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
         Patient patient=new Patient();
+        Integer patientid=Integer.parseInt((String)map.get("patientid"));
+        if(!canCurrentDoctorAccessPatient(session,patientid)){
+            json.put("message", CommonService.upd_message_error);
+            return json;
+        }
         patient.setDrugsids(DrugsUtils.vaild(map));
-        patient.setId(Integer.parseInt((String)map.get("patientid")));
+        patient.setId(patientid);
         json.put("message",patientService.seek(patient));
         return json;
     }
@@ -104,7 +114,10 @@ public class DoctorController {
         return json;
     }
     @RequestMapping(value = "/doctor/medicalhistory/{id}")
-    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request){
+    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request,HttpSession session){
+        if(!canCurrentDoctorAccessPatient(session,id)){
+            return "redirect:/doctor/seekMedicalAdvice";
+        }
         request.setAttribute("medicalhistorys",medicalhistoryService.getMedicalhistoryByPatientId(id));
         return "doctor/medicalhistory";
     }
@@ -118,8 +131,13 @@ public class DoctorController {
     }
     @RequestMapping( value = "/doctor/seekinfo",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject seekinfo(@RequestBody Map map){
+    public JSONObject seekinfo(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
+        Integer patientid=Integer.parseInt((String)map.get("patientid"));
+        if(!canCurrentDoctorAccessPatient(session,patientid)){
+            json.put("message", CommonService.add_message_error);
+            return json;
+        }
         String message=doctorService.seekInfo(map);
         json.put("message",message);
         return json;
@@ -130,13 +148,41 @@ public class DoctorController {
         Login login=(Login)session.getAttribute("login");
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
         JSONObject json=new JSONObject();
+        if(doctor==null||!doctorCanAccessPatient(doctor.getId(),id)){
+            json.put("message", "无权限操作该患者");
+            return json;
+        }
         Seek seek=seekService.getSeekByPatientId(id);
-        seek.setPatientname(patientService.getPatient(id).getName());
+        Patient patient=patientService.getPatient(id);
+        if(seek==null||patient==null){
+            json.put("message", "暂无数据，生成失败");
+            return json;
+        }
+        seek.setPatientname(patient.getName());
         seek.setDoctorname(doctor.getName());
         //createSeekInfo，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         String message= PDFUtils.createSeekInfo(seek,optionService,path);
         json.put("message",message);
         return json;
+    }
+
+    private boolean canCurrentDoctorAccessPatient(HttpSession session,Integer patientid){
+        Login login=(Login)session.getAttribute("login");
+        Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
+        return doctor!=null&&doctorCanAccessPatient(doctor.getId(),patientid);
+    }
+
+    private boolean doctorCanAccessPatient(Integer doctorid,Integer patientid){
+        List<Appointment> appointments=appointmentService.selectByDoctorId(doctorid,null,null);
+        if(appointments==null){
+            return false;
+        }
+        for(Appointment appointment:appointments){
+            if(patientid.equals(appointment.getPatientid())){
+                return true;
+            }
+        }
+        return false;
     }
 
 

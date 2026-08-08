@@ -14,6 +14,7 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -60,7 +61,7 @@ public class PDFUtils {
             for(int i=0;i<options.size();i++){
                 str+=options.get(i).getName()+"----"+options.get(i).getType()+"("+options.get(i).getPrice()+"元)\n";
             }
-            PdfWriter.getInstance(document, new FileOutputStream(path+seek.getPatientname()+DateUtils.date2String(new Date())+"就诊单.pdf"));
+            PdfWriter.getInstance(document, createFileOutputStream(path,seek.getPatientname()+DateUtils.date2String(new Date())+"就诊单.pdf"));
             document.open();
             PdfPTable pdfPTable = new PdfPTable(4);
             createCell("诊断书", 4, pdfPTable, font);
@@ -94,7 +95,7 @@ public class PDFUtils {
     public static String createAppointMent(Appointment appointment,String path) {
         Document document = new Document();
         try {
-            PdfWriter.getInstance(document, new FileOutputStream(path+appointment.getPatientname()+DateUtils.date2String(new Date())+"挂号单.pdf"));
+            PdfWriter.getInstance(document, createFileOutputStream(path,appointment.getPatientname()+DateUtils.date2String(new Date())+"挂号单.pdf"));
             document.open();
             PdfPTable pdfPTable = new PdfPTable(4);
             createCell("挂号单", 4, pdfPTable, font);
@@ -122,6 +123,14 @@ public class PDFUtils {
     private static String date2String(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("YYYY年MM月dd日");
         return sdf.format(date);
+    }
+
+    private static FileOutputStream createFileOutputStream(String path,String fileName) throws IOException {
+        File directory=new File(path==null||path.trim().equals("")?".":path);
+        if(!directory.exists()&&!directory.mkdirs()){
+            throw new IOException("Cannot create PDF directory: "+directory.getAbsolutePath());
+        }
+        return new FileOutputStream(new File(directory,fileName));
     }
 
     private static void createCell(String text, int colspan, PdfPTable pdfPTable, Font font) {

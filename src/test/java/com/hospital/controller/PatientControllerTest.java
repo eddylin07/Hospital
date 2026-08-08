@@ -38,8 +38,28 @@ public class PatientControllerTest {
         assertEquals(Integer.valueOf(123), patientService.lastAppointmentUpdate.getAppointmentid());
     }
 
+    @Test
+    public void downloadPdfWithoutAppointmentReturnsBusinessError() {
+        PatientController controller = new PatientController();
+        FakePatientService patientService = new FakePatientService(12);
+        FakeAppointmentService appointmentService = new FakeAppointmentService();
+        appointmentService.lastAppointmentId = null;
+        controller.patientService = patientService;
+        controller.appointmentService = appointmentService;
+        MockHttpSession session = new MockHttpSession();
+        Login login = new Login();
+        login.setId(5);
+        login.setRole(3);
+        session.setAttribute("login", login);
+
+        String message = (String) controller.downloadpdf(session).get("message");
+
+        assertEquals("暂无数据，生成失败", message);
+    }
+
     private static class FakeAppointmentService implements AppointmentService {
         private Appointment lastAppointment;
+        private Integer lastAppointmentId = 123;
 
         @Override
         public String addAppointment(Appointment appointment) {
@@ -49,13 +69,13 @@ public class PatientControllerTest {
 
         @Override
         public Integer selectTheLastAppointment(Integer patientId) {
-            return 123;
+            return lastAppointmentId;
         }
 
         @Override public List<Appointment> getAllAppointments() { throw new UnsupportedOperationException(); }
         @Override public List<Appointment> getAllAppointments(String doctorname, String patientname) { throw new UnsupportedOperationException(); }
         @Override public String delAppointment(Integer id) { throw new UnsupportedOperationException(); }
-        @Override public Appointment getAppointment(Integer id) { throw new UnsupportedOperationException(); }
+        @Override public Appointment getAppointment(Integer id) { return null; }
         @Override public String UpdateAppointment(Appointment appointment) { throw new UnsupportedOperationException(); }
         @Override public List<Appointment> getPatientMessage(Integer patientId) { throw new UnsupportedOperationException(); }
         @Override public List<Appointment> selectByDoctorId(Integer doctorId, String patientname, String time) { throw new UnsupportedOperationException(); }
