@@ -18,8 +18,7 @@ public class DrugsUtils {
                 }
             }
         }
-        ids = ids.substring(0, ids.length() - 1);
-        return ids;
+        return ids.equals("") ? ids : ids.substring(0, ids.length() - 1);
     }
 
     public static String vaild2(Map map) {
@@ -33,6 +32,6 @@ public class DrugsUtils {
                 ids += value + ",";
             }
         }
-        return ids.substring(0, ids.length() - 1);
+        return ids.equals("") ? ids : ids.substring(0, ids.length() - 1);
     }
 }
