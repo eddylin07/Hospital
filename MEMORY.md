@@ -27,3 +27,8 @@ JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test
   - Anonymous requests should be redirected by `LoginInterceptor`; authenticated requests should pass.
   - Dispensing should not update inventory or prescriptions for insufficient or non-positive requested quantities.
   - Prescription SQL should only update the latest seek row and should accumulate price from null safely.
+
+## Current run notes
+
+- On branch `cursor/missing-test-coverage-2f93`, `SeekMapperXmlTest` covers `SeekMapper.updateDrugs` SQL so drug updates target only the latest seek row and null prices are accumulated with `ifnull(price,0)`.
+- Validation passed with `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` (2 tests).
