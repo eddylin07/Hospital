@@ -16,3 +16,4 @@
 ## Review focus
 
 - Critical bug automation should prioritize concrete data loss, crashes, security holes, auth bypasses, inventory/write races, and high-impact user-facing breakage.
+- On `cursor/critical-bug-investigation-c96b`, fixed failed-login session persistence, role authorization, public admin self-registration, username-conflict registration linking, patient appointment IDOR, prescription inventory overdraw/race, and latest-seek-row prescription updates; `mvn test` passed with 16 tests on 2026-08-08.
