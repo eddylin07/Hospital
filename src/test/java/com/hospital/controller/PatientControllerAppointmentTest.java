@@ -37,12 +37,13 @@ public class PatientControllerAppointmentTest {
         });
         controller.appointmentService = service(AppointmentService.class, (proxy, method, args) -> {
             if ("addAppointment".equals(method.getName())) {
-                insertedAppointment.set((Appointment) args[0]);
+                Appointment appointment = (Appointment) args[0];
+                appointment.setId(100);
+                insertedAppointment.set(appointment);
                 return CommonService.add_message_success;
             }
             if ("selectTheLastAppointment".equals(method.getName())) {
-                assertEquals(Integer.valueOf(42), args[0]);
-                return 100;
+                throw new AssertionError("new appointment pointer must use generated insert id");
             }
             return defaultValue(method.getReturnType());
         });
@@ -59,6 +60,33 @@ public class PatientControllerAppointmentTest {
         assertEquals(Integer.valueOf(42), insertedAppointment.get().getPatientid());
         assertEquals(Integer.valueOf(42), updatedPatient.get().getId());
         assertEquals(Integer.valueOf(100), updatedPatient.get().getAppointmentid());
+    }
+
+    @Test
+    public void downloadPdfWithoutAppointmentReturnsErrorInsteadOfThrowing() {
+        PatientController controller = new PatientController();
+        Patient currentPatient = new Patient();
+        currentPatient.setId(42);
+        controller.patientService = service(PatientService.class, (proxy, method, args) -> {
+            if ("findPatientByLoginId".equals(method.getName())) {
+                return currentPatient;
+            }
+            return defaultValue(method.getReturnType());
+        });
+        controller.appointmentService = service(AppointmentService.class, (proxy, method, args) -> {
+            if ("selectTheLastAppointment".equals(method.getName())) {
+                return null;
+            }
+            return defaultValue(method.getReturnType());
+        });
+        Login login = new Login();
+        login.setId(7);
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("login", login);
+
+        JSONObject response = controller.downloadpdf(session);
+
+        assertEquals(CommonService.add_message_error, response.get("message"));
     }
 
     @SuppressWarnings("unchecked")

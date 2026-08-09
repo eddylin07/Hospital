@@ -18,6 +18,22 @@ public class MapperSqlSafetyTest {
     }
 
     @Test
+    public void drugPrimaryKeyResultMapIncludesDispensingFields() throws Exception {
+        String xml = read("src/main/resources/mapper/DrugsMapper.xml");
+
+        assertTrue(xml.contains("property=\"price\""));
+        assertTrue(xml.contains("property=\"number\""));
+    }
+
+    @Test
+    public void appointmentInsertReturnsGeneratedId() throws Exception {
+        String xml = read("src/main/resources/mapper/AppointmentMapper.xml");
+
+        assertTrue(xml.contains("useGeneratedKeys=\"true\""));
+        assertTrue(xml.contains("keyProperty=\"id\""));
+    }
+
+    @Test
     public void prescriptionUpdateTargetsLatestSeekOnly() throws Exception {
         String xml = read("src/main/resources/mapper/SeekMapper.xml");
 

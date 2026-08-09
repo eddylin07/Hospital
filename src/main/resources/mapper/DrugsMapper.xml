@@ -5,6 +5,9 @@
     <id column="id" jdbcType="INTEGER" property="id" />
     <result column="name" jdbcType="VARCHAR" property="name" />
     <result column="type" jdbcType="INTEGER" property="type" />
+    <result column="price" jdbcType="DECIMAL" property="price" />
+    <result column="number" jdbcType="INTEGER" property="number" />
+    <result column="text" jdbcType="VARCHAR" property="text" />
   </resultMap>
   <sql id="Base_Column_List">
     id, name, type

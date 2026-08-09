@@ -11,6 +11,9 @@ import com.hospital.uitls.PDFUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.NoTransactionException;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -98,6 +101,7 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
+    @Transactional
     public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
         Login login=(Login)session.getAttribute("login");
@@ -110,9 +114,19 @@ public class PatientController {
         appointment.setPatientid(currentPatient.getId());
         String message=appointmentService.addAppointment(appointment);
         if(CommonService.add_message_success.equals(message)){
-            patient.setAppointmentid(appointmentService.selectTheLastAppointment(currentPatient.getId()));
+            if(appointment.getId()==null){
+                rollbackIfActive();
+                json.put("message",CommonService.add_message_error);
+                return json;
+            }
+            patient.setAppointmentid(appointment.getId());
             patient.setId(currentPatient.getId());
-            patientService.updateAppointMent(patient);
+            String updateMessage=patientService.updateAppointMent(patient);
+            if(!CommonService.upd_message_success.equals(updateMessage)){
+                rollbackIfActive();
+                json.put("message",CommonService.add_message_error);
+                return json;
+            }
         }
         json.put("message",message);
         return json;
@@ -138,10 +152,29 @@ public class PatientController {
         JSONObject json=new JSONObject();
         Login login=(Login)session.getAttribute("login");
         Patient patient=patientService.findPatientByLoginId(login.getId());
+        if(patient==null){
+            json.put("message",CommonService.add_message_error);
+            return json;
+        }
         Integer idlast=appointmentService.selectTheLastAppointment(patient.getId());
+        if(idlast==null){
+            json.put("message",CommonService.add_message_error);
+            return json;
+        }
         Appointment appointment=appointmentService.getAppointment(idlast);
+        if(appointment==null){
+            json.put("message",CommonService.add_message_error);
+            return json;
+        }
         //createAppointMent，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         json.put("message",PDFUtils.createAppointMent(appointment,path));
         return json;
+    }
+
+    private void rollbackIfActive() {
+        try {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        } catch (NoTransactionException ignored) {
+        }
     }
 }
