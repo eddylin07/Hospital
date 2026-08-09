@@ -1,6 +1,7 @@
 package com.hospital.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hospital.common.CommonService;
 import com.hospital.entity.Appointment;
 import com.hospital.entity.Hospitalization;
 import com.hospital.entity.Login;
@@ -97,13 +98,22 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject appointment(@RequestBody Appointment appointment){
+    public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
+        Login login=(Login)session.getAttribute("login");
+        Patient currentPatient=patientService.findPatientByLoginId(login.getId());
+        if(currentPatient==null){
+            json.put("message",CommonService.add_message_error);
+            return json;
+        }
         Patient patient=new Patient();
+        appointment.setPatientid(currentPatient.getId());
         String message=appointmentService.addAppointment(appointment);
-        patient.setAppointmentid(appointmentService.selectTheLastAppointment(appointment.getPatientid()));
-        patient.setId(appointment.getPatientid());
-        patientService.updateAppointMent(patient);
+        if(CommonService.add_message_success.equals(message)){
+            patient.setAppointmentid(appointmentService.selectTheLastAppointment(currentPatient.getId()));
+            patient.setId(currentPatient.getId());
+            patientService.updateAppointMent(patient);
+        }
         json.put("message",message);
         return json;
     }
