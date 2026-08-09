@@ -145,8 +145,12 @@ public class DoctorController {
             return json;
         }
         Seek seek=seekService.getSeekByPatientId(id);
+        if(seek==null){
+            json.put("message",CommonService.add_message_error);
+            return json;
+        }
         Patient patient=patientService.getPatient(id);
-        if(seek==null||patient==null){
+        if(patient==null){
             json.put("message",CommonService.add_message_error);
             return json;
         }
