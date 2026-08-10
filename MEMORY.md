@@ -12,6 +12,7 @@
 
 - Use `mvn test` as the primary automated test command.
 - Prefer focused unit tests for utility classes and edge-case logic to avoid requiring a database or full Spring context.
+- 2026-08-10: Added JUnit 4 tests for `SeekMapper.updateDrugs` XML and date formatting around week-year boundaries; `mvn test` passed with Java 8.
 
 ## Working notes
 
