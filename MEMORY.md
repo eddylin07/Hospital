@@ -11,3 +11,4 @@
 
 - Created from local inference on 2026-08-10 because `~/.codex/templates/` was not present in the cloud environment.
 - Historical automation memory shows recurring critical areas: failed-login session persistence, role authorization, public admin registration, patient appointment IDOR, prescription inventory overdraw/races, latest-seek-row corruption, doctor/patient access checks, PDF null crashes, empty selection parsing, and Java/Maven test compatibility.
+- On `cursor/critical-bug-investigation-f76e`, `mvn test` passed with 8 focused unit tests on 2026-08-10 after fixing critical auth, authorization, registration, appointment, prescription inventory, doctor access, and null/empty-input crash paths.
