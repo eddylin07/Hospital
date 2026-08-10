@@ -48,14 +48,19 @@ public class PDFUtils {
 //        createSeekInfo(new Seek("浑身不舒服","花柳病","1,2,3,4,5",12,new BigDecimal("32.6"),"张安"));
 //    }
     public static String createSeekInfo(Seek seek, OptionService optionService, String path) {
-        List ids=PatientDoctorutils.getOptionIds(seek.getOptions());
-        List<Option> options=new ArrayList<>();
-        ids.forEach(id->{
-          Option option =optionService.getOption((Integer)id);
-            options.add(option);
-        });
         Document document = new Document();
         try {
+            if (seek.getOptions() == null || seek.getOptions().trim().equals("")) {
+                return "系统内部错误，生成失败";
+            }
+            List ids=PatientDoctorutils.getOptionIds(seek.getOptions());
+            List<Option> options=new ArrayList<>();
+            ids.forEach(id->{
+              Option option =optionService.getOption((Integer)id);
+                if (option != null) {
+                    options.add(option);
+                }
+            });
             String str="";
             for(int i=0;i<options.size();i++){
                 str+=options.get(i).getName()+"----"+options.get(i).getType()+"("+options.get(i).getPrice()+"元)\n";
