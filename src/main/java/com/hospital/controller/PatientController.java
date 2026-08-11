@@ -97,12 +97,19 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject appointment(@RequestBody Appointment appointment){
+    public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
         Patient patient=new Patient();
+        Login login=(Login)session.getAttribute("login");
+        Patient sessionPatient=patientService.findPatientByLoginId(login.getId());
+        if (sessionPatient == null) {
+            json.put("message","添加失败");
+            return json;
+        }
+        appointment.setPatientid(sessionPatient.getId());
         String message=appointmentService.addAppointment(appointment);
-        patient.setAppointmentid(appointmentService.selectTheLastAppointment(appointment.getPatientid()));
-        patient.setId(appointment.getPatientid());
+        patient.setAppointmentid(appointmentService.selectTheLastAppointment(sessionPatient.getId()));
+        patient.setId(sessionPatient.getId());
         patientService.updateAppointMent(patient);
         json.put("message",message);
         return json;
