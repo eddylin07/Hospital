@@ -25,9 +25,39 @@ public class LoginInterceptor implements HandlerInterceptor {
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+        if (!hasRequiredRole(request.getRequestURI(), login)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean hasRequiredRole(String path, Login login) {
+        Integer role = login.getRole();
+        if (role == null) {
+            return false;
+        }
+        if (path.startsWith("/admin/") || path.equals("/hospital/admin/index")) {
+            return role == 1;
+        }
+        if (path.equals("/hospital/doctor/index") || isDoctorWorkflow(path)) {
+            return role == 2;
+        }
+        if (path.startsWith("/patient/") || path.equals("/hospital/patient/index")) {
+            return role == 3;
+        }
+        return true;
+    }
+
+    private boolean isDoctorWorkflow(String path) {
+        return path.equals("/doctor/seekMedicalAdvice")
+                || path.startsWith("/doctor/seek/")
+                || path.equals("/doctor/drug")
+                || path.equals("/doctor/zation")
+                || path.startsWith("/doctor/medicalhistory/")
+                || path.equals("/doctor/seekinfo")
+                || path.startsWith("/doctor/printseek/");
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
