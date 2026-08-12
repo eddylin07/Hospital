@@ -40,6 +40,24 @@ public class PatientControllerTest {
         assertEquals(Integer.valueOf(88), patientService.updatedPatient.getAppointmentid());
     }
 
+    @Test
+    public void downloadPdfWithoutAppointmentReturnsControlledMessage() {
+        PatientController controller = new PatientController();
+        controller.patientService = new FakePatientService();
+        FakeAppointmentService appointmentService = new FakeAppointmentService();
+        appointmentService.lastAppointmentId = null;
+        controller.appointmentService = appointmentService;
+        MockHttpSession session = new MockHttpSession();
+        Login login = new Login();
+        login.setId(7);
+        login.setRole(3);
+        session.setAttribute("login", login);
+
+        JSONObject response = controller.downloadpdf(session);
+
+        assertEquals("暂无预约信息", response.get("message"));
+    }
+
     private static class FakePatientService implements PatientService {
         Patient updatedPatient;
 
@@ -99,6 +117,8 @@ public class PatientControllerTest {
 
     private static class FakeAppointmentService implements AppointmentService {
         Appointment addedAppointment;
+        Integer lastAppointmentId = 88;
+        Appointment appointmentToReturn;
 
         @Override
         public String addAppointment(Appointment appointment) {
@@ -108,7 +128,7 @@ public class PatientControllerTest {
 
         @Override
         public Integer selectTheLastAppointment(Integer patientId) {
-            return 88;
+            return lastAppointmentId;
         }
 
         @Override
@@ -128,7 +148,7 @@ public class PatientControllerTest {
 
         @Override
         public Appointment getAppointment(Integer id) {
-            return null;
+            return appointmentToReturn;
         }
 
         @Override

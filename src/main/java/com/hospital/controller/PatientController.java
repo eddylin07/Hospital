@@ -136,7 +136,15 @@ public class PatientController {
         Login login=(Login)session.getAttribute("login");
         Patient patient=patientService.findPatientByLoginId(login.getId());
         Integer idlast=appointmentService.selectTheLastAppointment(patient.getId());
+        if (idlast == null) {
+            json.put("message","暂无预约信息");
+            return json;
+        }
         Appointment appointment=appointmentService.getAppointment(idlast);
+        if (appointment == null) {
+            json.put("message","暂无预约信息");
+            return json;
+        }
         //createAppointMent，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         json.put("message",PDFUtils.createAppointMent(appointment,path));
         return json;
