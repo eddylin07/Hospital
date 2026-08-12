@@ -14,6 +14,8 @@ Operational notes:
 - Role ids used by the app are admin=1, doctor=2, and patient=3. Server-side role checks must protect `/admin/**`, doctor workflow routes, and patient routes; menu hiding is not authorization.
 - Public registration must only bind pre-existing doctor/patient certificate records. It must not create admin accounts for blank or missing certificate ids.
 - Prescription dispensing must reject quantities above current stock, use an atomic `number >= requested` SQL guard, and update only the patient's latest seek row.
+- Doctor workflow mutations must verify that the current doctor owns an appointment for the target patient before writing diagnosis, prescription, hospitalization, medical history, or seek PDF data.
+- Patient appointment PDF generation must handle missing appointment records with a controlled message instead of passing null into PDF utilities.
 
 Open questions:
 - None for the current repository setup.
