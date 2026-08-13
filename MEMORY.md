@@ -11,4 +11,4 @@
 - Follow `AGENTS.md` for future work in this repository.
 - Credentials: record only configuration locations, never secret values.
 - On 2026-08-13, current `master` still had critical auth/data-integrity bugs: failed-login sessions, missing server-side role checks, public blank-cert admin registration, patient appointment IDOR, doctor cross-patient workflow access, prescription overdraw/race risk, missing drug price/stock result mapping, appointment `MAX(id)` race, and latest-seek prescription corruption.
-- Java 8 and Maven 3.8.7 are available in this cloud image; `mvn test` is the primary validation command after fixes.
+- Java 8 and Maven 3.8.7 are available in this cloud image; `mvn test` passed with 18 tests on 2026-08-13 after the critical fixes.
