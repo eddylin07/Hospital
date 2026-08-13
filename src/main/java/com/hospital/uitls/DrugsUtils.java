@@ -18,8 +18,10 @@ public class DrugsUtils {
                 }
             }
         }
-        ids = ids.substring(0, ids.length() - 1);
-        return ids;
+        if (ids.length() == 0) {
+            return "";
+        }
+        return ids.substring(0, ids.length() - 1);
     }
 
     public static String vaild2(Map map) {
@@ -32,6 +34,9 @@ public class DrugsUtils {
             if (key.split("_")[0].equals("option")) {
                 ids += value + ",";
             }
+        }
+        if (ids.length() == 0) {
+            return "";
         }
         return ids.substring(0, ids.length() - 1);
     }
