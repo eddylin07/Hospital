@@ -20,14 +20,40 @@ public class LoginInterceptor implements HandlerInterceptor {
         //这里的User是登陆时放入session的
         Login login = (Login) session.getAttribute("login");
         //如果session中没有user，表示没登陆
-        if (login == null){
+        if (login == null || login.getId() == null || login.getRole() == null){
             //这个方法返回false表示忽略当前请求，如果一个用户调用了需要登陆才能使用的接口，如果他没有登陆这里会直接忽略掉
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+        String uri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && contextPath.length() > 0 && uri.startsWith(contextPath)) {
+            uri = uri.substring(contextPath.length());
+        }
+        if (uri.startsWith("/admin/") && !Integer.valueOf(1).equals(login.getRole())) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        if (uri.startsWith("/patient/") && !Integer.valueOf(3).equals(login.getRole())) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        if (isDoctorWorkflow(uri) && !Integer.valueOf(2).equals(login.getRole())) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean isDoctorWorkflow(String uri) {
+        return uri.equals("/doctor/seekMedicalAdvice")
+                || uri.startsWith("/doctor/seek/")
+                || uri.equals("/doctor/drug")
+                || uri.equals("/doctor/zation")
+                || uri.startsWith("/doctor/medicalhistory/")
+                || uri.equals("/doctor/seekinfo")
+                || uri.startsWith("/doctor/printseek/");
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
