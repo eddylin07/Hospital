@@ -1,8 +1,8 @@
 package com.hospital.uitls;
 
 import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Method;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -18,10 +18,12 @@ public class DateUtilsTest {
     }
 
     @Test
-    public void pdfDate2StringUsesCalendarYearAtWeekYearBoundary() {
+    public void pdfDate2StringUsesCalendarYearAtWeekYearBoundary() throws Exception {
         Date boundaryDate = new GregorianCalendar(2018, Calendar.DECEMBER, 31).getTime();
+        Method date2String = PDFUtils.class.getDeclaredMethod("date2String", Date.class);
+        date2String.setAccessible(true);
 
-        String formatted = ReflectionTestUtils.invokeMethod(PDFUtils.class, "date2String", boundaryDate);
+        String formatted = (String) date2String.invoke(null, boundaryDate);
 
         assertEquals("2018年12月31日", formatted);
     }
