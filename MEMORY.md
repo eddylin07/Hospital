@@ -11,7 +11,7 @@
 
 - Use Maven for Java test execution.
 - Full application/integration testing may require database configuration; exact local service setup is not documented yet.
-- 2026-08-14 coverage run: JDK 8 with `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed 8 JUnit4 tests covering login session handling, dispensing inventory/price validation, latest-seek prescription SQL, and calendar-year date formatting.
+- 2026-08-14 coverage run: JDK 8 with `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed 9 JUnit4 tests covering login session handling, dispensing inventory/price validation, `DrugsMapper` price/number mapping, latest-seek prescription SQL, and calendar-year date formatting.
 
 ## Pending clarifications
 
