@@ -70,7 +70,12 @@
     delete from appointment
     where id = #{id,jdbcType=INTEGER}
   </delete>
-  <insert id="insert" parameterType="com.hospital.entity.Appointment">
+  <select id="countByDoctorAndPatient" resultType="Integer">
+    select count(1) from appointment
+    where doctorid = #{doctorId}
+      and patientid = #{patientid}
+  </select>
+  <insert id="insert" parameterType="com.hospital.entity.Appointment" useGeneratedKeys="true" keyProperty="id">
     insert into appointment (patientid, doctorid,
       time,expenses)
     values (#{patientid,jdbcType=INTEGER}, #{doctorid,jdbcType=INTEGER},
