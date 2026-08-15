@@ -104,7 +104,7 @@ public class PatientServiceImplTest {
 
     @SuppressWarnings("unchecked")
     private <T> T noop(Class<T> type) {
-        return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[]{type}, (proxy, method, args) -> defaultValue(method.getReturnType()));
+        return createProxy(type, (proxy, method, args) -> defaultValue(method.getReturnType()));
     }
 
     private Object defaultValue(Class<?> type) {
@@ -128,7 +128,7 @@ public class PatientServiceImplTest {
         }
 
         private DrugsMapper proxy() {
-            return proxy(DrugsMapper.class, (proxy, method, args) -> {
+            return createProxy(DrugsMapper.class, (proxy, method, args) -> {
                 if ("selectByPrimaryKey".equals(method.getName())) {
                     return drug;
                 }
@@ -145,7 +145,7 @@ public class PatientServiceImplTest {
         private int updateCalls;
 
         private PatientMapper proxy() {
-            return proxy(PatientMapper.class, (proxy, method, args) -> {
+            return createProxy(PatientMapper.class, (proxy, method, args) -> {
                 if ("updateByPrimaryKeySelective".equals(method.getName())) {
                     updateCalls++;
                     return 1;
@@ -160,7 +160,7 @@ public class PatientServiceImplTest {
         private Seek updatedSeek;
 
         private SeekMapper proxy() {
-            return proxy(SeekMapper.class, (proxy, method, args) -> {
+            return createProxy(SeekMapper.class, (proxy, method, args) -> {
                 if ("updateDrugs".equals(method.getName())) {
                     updateCalls++;
                     updatedSeek = (Seek) args[0];
@@ -172,7 +172,7 @@ public class PatientServiceImplTest {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T proxy(Class<T> type, InvocationHandler handler) {
+    private <T> T createProxy(Class<T> type, InvocationHandler handler) {
         return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[]{type}, handler);
     }
 }
