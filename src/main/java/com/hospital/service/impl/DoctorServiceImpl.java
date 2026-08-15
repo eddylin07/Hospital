@@ -98,13 +98,34 @@ public class DoctorServiceImpl implements DoctorService {
         if(seek.getOptions()==null||seek.getOptions().equals("")){
             return "请选择检查项目";
         }
-        seek.setDays(Integer.parseInt((String)map.get("days")));
+        Integer days=parseInteger(map.get("days"));
+        Integer patientid=parseInteger(map.get("patientid"));
+        if(days==null||days<0||patientid==null){
+            return "诊断信息错误";
+        }
+        seek.setDays(days);
         seek.setDescribes((String)map.get("describes"));
         seek.setIllname((String)map.get("illname"));
-        seek.setPatientid(Integer.parseInt((String)map.get("patientid")));
-        BigDecimal price=optionMapper.getTotalPrice(PatientDoctorutils.getOptionIds(seek.getOptions()));
+        seek.setPatientid(patientid);
+        BigDecimal price;
+        try{
+            price=optionMapper.getTotalPrice(PatientDoctorutils.getOptionIds(seek.getOptions()));
+        }catch (NumberFormatException e){
+            return "检查项信息错误";
+        }
         seek.setPrice(price);
         Integer index=seekMapper.insert(seek);
         return index>0?CommonService.add_message_success:CommonService.add_message_error;
+    }
+
+    private Integer parseInteger(Object value){
+        if(value==null){
+            return null;
+        }
+        try{
+            return Integer.parseInt(String.valueOf(value));
+        }catch (NumberFormatException e){
+            return null;
+        }
     }
 }

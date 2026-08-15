@@ -20,6 +20,7 @@ import java.util.Map;
 
 @Service
 public class PatientServiceImpl implements PatientService {
+    private static final int MAX_PRESCRIPTION_TEXT_LENGTH = 65535;
     @Autowired
     PatientMapper patientMapper;
     @Autowired
@@ -91,6 +92,9 @@ public class PatientServiceImpl implements PatientService {
         String drugsids=patient.getDrugsids();
         if(drugsids==null||drugsids.trim().equals("")){
             return "请选择药品";
+        }
+        if(drugsids.length()>MAX_PRESCRIPTION_TEXT_LENGTH){
+            return "药品信息过长";
         }
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);

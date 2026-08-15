@@ -72,6 +72,42 @@ public class PatientServiceImplTest {
         Assert.assertEquals(new BigDecimal("5.00"), seekMapper.updatedSeek.getPrice());
     }
 
+    @Test
+    public void seekAllowsPrescriptionLongerThanOldVarcharLimit() {
+        RecordingDrugsMapper drugsMapper = new RecordingDrugsMapper(stockedDrug(1, "Aspirin", 500, "2.50"), 1);
+        PatientServiceImpl service = baseService();
+        service.drugsMapper = drugsMapper.proxy();
+        RecordingPatientMapper patientMapper = new RecordingPatientMapper();
+        RecordingSeekMapper seekMapper = new RecordingSeekMapper();
+        service.patientMapper = patientMapper.proxy();
+        service.seekMapper = seekMapper.proxy();
+
+        String message = service.seek(patient(8, repeatedPrescription(100)));
+
+        Assert.assertEquals(CommonService.upd_message_success, message);
+        Assert.assertEquals(100, drugsMapper.updateCalls);
+        Assert.assertEquals(1, patientMapper.updateCalls);
+        Assert.assertEquals(1, seekMapper.updateCalls);
+    }
+
+    @Test
+    public void seekRejectsPrescriptionTextBeyondTextLimitBeforeUpdatingAnything() {
+        RecordingDrugsMapper drugsMapper = new RecordingDrugsMapper(stockedDrug(1, "Aspirin", 500, "2.50"), 1);
+        PatientServiceImpl service = baseService();
+        service.drugsMapper = drugsMapper.proxy();
+        RecordingPatientMapper patientMapper = new RecordingPatientMapper();
+        RecordingSeekMapper seekMapper = new RecordingSeekMapper();
+        service.patientMapper = patientMapper.proxy();
+        service.seekMapper = seekMapper.proxy();
+
+        String message = service.seek(patient(8, repeatedPrescription(17000)));
+
+        Assert.assertEquals("药品信息过长", message);
+        Assert.assertEquals(0, drugsMapper.updateCalls);
+        Assert.assertEquals(0, patientMapper.updateCalls);
+        Assert.assertEquals(0, seekMapper.updateCalls);
+    }
+
     private PatientServiceImpl serviceWithDrug(Drugs drug, int updateResult) {
         PatientServiceImpl service = baseService();
         service.drugsMapper = new RecordingDrugsMapper(drug, updateResult).proxy();
@@ -91,6 +127,17 @@ public class PatientServiceImplTest {
         patient.setId(id);
         patient.setDrugsids(drugsids);
         return patient;
+    }
+
+    private String repeatedPrescription(int count) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            if (i > 0) {
+                builder.append(",");
+            }
+            builder.append("1@1");
+        }
+        return builder.toString();
     }
 
     private Drugs stockedDrug(Integer id, String name, Integer number, String price) {

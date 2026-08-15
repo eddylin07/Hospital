@@ -4,6 +4,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 
 public class MapperXmlTest {
@@ -14,6 +16,14 @@ public class MapperXmlTest {
         String xml = new String(readAll(inputStream), StandardCharsets.UTF_8).replaceAll("\\s+", " ").toLowerCase();
 
         Assert.assertTrue(xml.contains("update seek set drugs=#{drugs},price=price+#{price} where patientid=#{patientid} order by id desc limit 1"));
+    }
+
+    @Test
+    public void prescriptionColumnsAreTextToAvoidSilentTruncation() throws Exception {
+        String sql = new String(Files.readAllBytes(Paths.get("sql/hospital.sql")), StandardCharsets.UTF_8).replaceAll("\\s+", " ").toLowerCase();
+
+        Assert.assertTrue(sql.contains("`drugsids` text"));
+        Assert.assertTrue(sql.contains("`drugs` text"));
     }
 
     private byte[] readAll(InputStream inputStream) throws Exception {
