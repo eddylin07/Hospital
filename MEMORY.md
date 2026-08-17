@@ -20,3 +20,4 @@ JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test
 ## Coverage automation notes
 
 - Prior coverage runs for this repository focused on login/session handling, interceptor authentication checks, prescription dispensing inventory and price updates, mapper XML invariants, and date formatting around calendar-year boundaries.
+- On branch `cursor/missing-test-coverage-9182`, `SeekMapperXmlTest` covers `SeekMapper.updateDrugs` so prescription dispensing updates only the latest seek row and treats existing NULL price as zero. Validation: `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 2 tests.
