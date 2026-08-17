@@ -6,6 +6,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class LoginInterceptorTest {
@@ -17,7 +18,7 @@ public class LoginInterceptorTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         assertFalse(interceptor.preHandle(request, response, new Object()));
-        assertFalse(request.isRequestedSessionIdValid());
+        assertNull(request.getSession(false));
     }
 
     @Test
