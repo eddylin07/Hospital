@@ -53,6 +53,11 @@
     </if>
     order by a.id
   </select>
+  <select id="countByDoctorIdAndPatientId" resultType="int">
+    select count(*) from appointment
+    where doctorid = #{doctorId}
+    and patientid = #{patientid}
+  </select>
   <select id="selectTheLast" parameterType="Integer"  resultType="Integer">
     select max(id) from appointment
     where patientid = #{patientid}
@@ -70,7 +75,7 @@
     delete from appointment
     where id = #{id,jdbcType=INTEGER}
   </delete>
-  <insert id="insert" parameterType="com.hospital.entity.Appointment">
+  <insert id="insert" parameterType="com.hospital.entity.Appointment" useGeneratedKeys="true" keyProperty="id">
     insert into appointment (patientid, doctorid,
       time,expenses)
     values (#{patientid,jdbcType=INTEGER}, #{doctorid,jdbcType=INTEGER},
