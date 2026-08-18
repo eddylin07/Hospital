@@ -67,6 +67,11 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    public boolean hasAppointment(Integer doctorId, Integer patientId) {
+        return doctorId!=null&&patientId!=null&&appointmentMapper.countByDoctorIdAndPatientId(doctorId,patientId)>0;
+    }
+
+    @Override
     public Integer selectTheLastAppointment(Integer patientId) {
         return appointmentMapper.selectTheLast(patientId);
     }

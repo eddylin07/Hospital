@@ -10,6 +10,7 @@ import com.hospital.uitls.PDFUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -97,13 +98,25 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject appointment(@RequestBody Appointment appointment){
+    @Transactional
+    public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
-        Patient patient=new Patient();
+        Login login=(Login)session.getAttribute("login");
+        Patient patient=patientService.findPatientByLoginId(login.getId());
+        if(patient==null){
+            json.put("message","未找到当前患者信息");
+            return json;
+        }
+        appointment.setPatientid(patient.getId());
         String message=appointmentService.addAppointment(appointment);
-        patient.setAppointmentid(appointmentService.selectTheLastAppointment(appointment.getPatientid()));
-        patient.setId(appointment.getPatientid());
-        patientService.updateAppointMent(patient);
+        if(appointment.getId()==null){
+            json.put("message","预约创建失败");
+            return json;
+        }
+        Patient updatePatient=new Patient();
+        updatePatient.setAppointmentid(appointment.getId());
+        updatePatient.setId(patient.getId());
+        patientService.updateAppointMent(updatePatient);
         json.put("message",message);
         return json;
     }
@@ -130,6 +143,10 @@ public class PatientController {
         Patient patient=patientService.findPatientByLoginId(login.getId());
         Integer idlast=appointmentService.selectTheLastAppointment(patient.getId());
         Appointment appointment=appointmentService.getAppointment(idlast);
+        if(appointment==null){
+            json.put("message","未找到预约信息");
+            return json;
+        }
         //createAppointMent，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         json.put("message",PDFUtils.createAppointMent(appointment,path));
         return json;

@@ -18,6 +18,9 @@ public class DrugsUtils {
                 }
             }
         }
+        if(ids.equals("")){
+            return "";
+        }
         ids = ids.substring(0, ids.length() - 1);
         return ids;
     }
@@ -32,6 +35,9 @@ public class DrugsUtils {
             if (key.split("_")[0].equals("option")) {
                 ids += value + ",";
             }
+        }
+        if(ids.equals("")){
+            return "";
         }
         return ids.substring(0, ids.length() - 1);
     }
