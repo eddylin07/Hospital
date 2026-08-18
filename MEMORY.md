@@ -6,3 +6,4 @@
 - Test convention: prefer JUnit 4 with Mockito or mapper XML parsing; avoid tests that require a live MySQL database unless necessary.
 - Validation command: `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test`.
 - Environment caveat: Lombok 1.16.22 requires JDK 8 for compilation in this runner.
+- On branch `cursor/missing-test-coverage-e1ab`, regression tests cover failed-login session handling, login interceptor anonymous/authenticated behavior, latest-seek-only/null-safe prescription SQL, and calendar-year date formatting for shared/PDF date paths. Validation passed with 7 tests.
