@@ -14,6 +14,7 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -60,7 +61,7 @@ public class PDFUtils {
             for(int i=0;i<options.size();i++){
                 str+=options.get(i).getName()+"----"+options.get(i).getType()+"("+options.get(i).getPrice()+"元)\n";
             }
-            PdfWriter.getInstance(document, new FileOutputStream(path+seek.getPatientname()+DateUtils.date2String(new Date())+"就诊单.pdf"));
+            PdfWriter.getInstance(document, new FileOutputStream(buildOutputFile(path,seek.getPatientname(),"就诊单.pdf")));
             document.open();
             PdfPTable pdfPTable = new PdfPTable(4);
             createCell("诊断书", 4, pdfPTable, font);
@@ -94,7 +95,7 @@ public class PDFUtils {
     public static String createAppointMent(Appointment appointment,String path) {
         Document document = new Document();
         try {
-            PdfWriter.getInstance(document, new FileOutputStream(path+appointment.getPatientname()+DateUtils.date2String(new Date())+"挂号单.pdf"));
+            PdfWriter.getInstance(document, new FileOutputStream(buildOutputFile(path,appointment.getPatientname(),"挂号单.pdf")));
             document.open();
             PdfPTable pdfPTable = new PdfPTable(4);
             createCell("挂号单", 4, pdfPTable, font);
@@ -129,5 +130,23 @@ public class PDFUtils {
         cell.setColspan(colspan);
         pdfPTable.addCell(cell);
 
+    }
+
+    static File buildOutputFile(String path, String patientName, String suffix) throws IOException {
+        File baseDir = new File(path == null || path.trim().equals("") ? "." : path);
+        String filename = safeFilename(patientName) + DateUtils.date2String(new Date()) + suffix;
+        File output = new File(baseDir, filename);
+        String basePath = baseDir.getCanonicalFile().getPath();
+        String outputPath = output.getCanonicalFile().getPath();
+        if (!outputPath.equals(basePath) && !outputPath.startsWith(basePath + File.separator)) {
+            throw new IOException("Invalid PDF output path");
+        }
+        return output;
+    }
+
+    private static String safeFilename(String value) {
+        String safe = value == null ? "" : value.replaceAll("[\\\\/]+", "_").replace("..", "_");
+        safe = safe.replaceAll("[\\r\\n\\t\\x00]", "_").trim();
+        return safe.equals("") ? "patient" : safe;
     }
 }

@@ -76,6 +76,9 @@ public class DoctorController {
     public String seekMedicalAdvice(HttpServletRequest request, HttpSession session,@RequestParam(value = "patientname",required = false)String patientname,@RequestParam(value = "time",required = false)String time){
         Login login=(Login)session.getAttribute("login");
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
+        if(doctor==null){
+            return "redirect:/hospital/login";
+        }
         request.setAttribute("appointments" ,appointmentService.selectByDoctorId(doctor.getId(),patientname,time));
         return "doctor/seekMedicalAdvice";
     }

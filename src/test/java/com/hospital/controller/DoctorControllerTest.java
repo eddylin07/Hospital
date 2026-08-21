@@ -20,6 +20,14 @@ import static org.junit.Assert.assertEquals;
 
 public class DoctorControllerTest {
     @Test
+    public void seekMedicalAdviceRedirectsWhenDoctorLinkIsMissing() {
+        DoctorController controller = new DoctorController();
+        TestSupport.setField(controller, "doctorService", TestSupport.proxy(DoctorService.class, (proxy, method, args) -> null));
+
+        assertEquals("redirect:/hospital/login", controller.seekMedicalAdvice(null, doctorSession(), null, null));
+    }
+
+    @Test
     public void drugMutationRequiresDoctorPatientAppointment() {
         DoctorController controller = new DoctorController();
         AtomicInteger patientMutations = new AtomicInteger();
