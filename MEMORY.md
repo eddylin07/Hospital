@@ -15,3 +15,4 @@
 
 - High-risk areas seen in prior coverage work: login/session handling, interceptor authorization behavior, dispensing inventory and billing logic, mapper XML SQL invariants, and shared date/formatting utilities.
 - This run adds regression coverage for `PatientServiceImpl.seek` dispensing validation and `SeekMapper.updateDrugs` SQL invariants. It also fixes dispensing to validate all requested drug quantities before writes and fixes the mapper to update only the latest seek row with null-safe price accumulation. `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 4 tests.
+- Follow-up coverage from the exploration subagent added `LoginControllerTest` for failed/successful login session behavior and fixed `LoginController.login` to store the session only when the login service returns a success message. The same Maven command passed with 6 tests.
