@@ -1,6 +1,7 @@
 package com.hospital.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hospital.common.CommonService;
 import com.hospital.entity.*;
 import com.hospital.service.*;
 import com.hospital.uitls.DrugsUtils;
@@ -80,7 +81,10 @@ public class DoctorController {
         return "doctor/seekMedicalAdvice";
     }
     @RequestMapping("/doctor/seek/{id}")
-    public String seek(@PathVariable Integer id,HttpServletRequest request){
+    public String seek(@PathVariable Integer id,HttpServletRequest request,HttpSession session){
+        if(!canCurrentDoctorAccessPatient(session, id)){
+            return "redirect:/doctor/seekMedicalAdvice";
+        }
         request.setAttribute("options",optionService.getAll());
         request.setAttribute("patient",patientService.getPatient(id));
         request.setAttribute("drugs",drugsService.getAllDrugs());
@@ -88,23 +92,35 @@ public class DoctorController {
     }
     @RequestMapping(value = "/doctor/drug",method = RequestMethod.PUT)
     @ResponseBody
-    public JSONObject drug(@RequestBody Map map){
+    public JSONObject drug(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
+        Integer patientid = parseInteger((String)map.get("patientid"));
+        if(!canCurrentDoctorAccessPatient(session, patientid)){
+            json.put("message", CommonService.upd_message_error);
+            return json;
+        }
         Patient patient=new Patient();
         patient.setDrugsids(DrugsUtils.vaild(map));
-        patient.setId(Integer.parseInt((String)map.get("patientid")));
+        patient.setId(patientid);
         json.put("message",patientService.seek(patient));
         return json;
     }
     @RequestMapping(value = "/doctor/zation",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject zation(@RequestBody Hospitalization hospitalization){
+    public JSONObject zation(@RequestBody Hospitalization hospitalization,HttpSession session){
         JSONObject json=new JSONObject();
+        if(!canCurrentDoctorAccessPatient(session, hospitalization.getPatientid())){
+            json.put("message", CommonService.add_message_error);
+            return json;
+        }
         json.put("message",hospitalizationService.AddHospitalization(hospitalization));
         return json;
     }
     @RequestMapping(value = "/doctor/medicalhistory/{id}")
-    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request){
+    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request,HttpSession session){
+        if(!canCurrentDoctorAccessPatient(session, id)){
+            return "redirect:/doctor/seekMedicalAdvice";
+        }
         request.setAttribute("medicalhistorys",medicalhistoryService.getMedicalhistoryByPatientId(id));
         return "doctor/medicalhistory";
     }
@@ -118,8 +134,13 @@ public class DoctorController {
     }
     @RequestMapping( value = "/doctor/seekinfo",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject seekinfo(@RequestBody Map map){
+    public JSONObject seekinfo(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
+        Integer patientid = parseInteger((String)map.get("patientid"));
+        if(!canCurrentDoctorAccessPatient(session, patientid)){
+            json.put("message", CommonService.add_message_error);
+            return json;
+        }
         String message=doctorService.seekInfo(map);
         json.put("message",message);
         return json;
@@ -130,7 +151,15 @@ public class DoctorController {
         Login login=(Login)session.getAttribute("login");
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
         JSONObject json=new JSONObject();
+        if(!canDoctorAccessPatient(doctor, id)){
+            json.put("message", CommonService.add_message_error);
+            return json;
+        }
         Seek seek=seekService.getSeekByPatientId(id);
+        if(seek==null){
+            json.put("message", "未找到就诊信息");
+            return json;
+        }
         seek.setPatientname(patientService.getPatient(id).getName());
         seek.setDoctorname(doctor.getName());
         //createSeekInfo，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
@@ -139,5 +168,28 @@ public class DoctorController {
         return json;
     }
 
+    private boolean canCurrentDoctorAccessPatient(HttpSession session, Integer patientid) {
+        Login login=(Login)session.getAttribute("login");
+        if(login==null){
+            return false;
+        }
+        Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
+        return canDoctorAccessPatient(doctor, patientid);
+    }
+
+    private boolean canDoctorAccessPatient(Doctor doctor, Integer patientid) {
+        return doctor!=null && appointmentService.hasDoctorPatientAppointment(doctor.getId(), patientid);
+    }
+
+    private Integer parseInteger(String value) {
+        if(value==null || value.trim().equals("")){
+            return null;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 
 }
