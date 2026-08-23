@@ -25,9 +25,44 @@ public class LoginInterceptor implements HandlerInterceptor {
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+        if(!hasRequiredRole(request,login)){
+            response.sendRedirect("/hospital/login");
+            return false;
+        }
+        return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean hasRequiredRole(HttpServletRequest request,Login login){
+        String path=request.getRequestURI();
+        String contextPath=request.getContextPath();
+        if(contextPath!=null&&!contextPath.equals("")&&path.startsWith(contextPath)){
+            path=path.substring(contextPath.length());
+        }
+        Integer role=login.getRole();
+        if(path.startsWith("/admin/")||"/hospital/admin/index".equals(path)){
+            return Integer.valueOf(1).equals(role);
+        }
+        if(path.startsWith("/patient/")&&!path.startsWith("/patient/search")){
+            return Integer.valueOf(3).equals(role);
+        }
+        if("/hospital/patient/index".equals(path)){
+            return Integer.valueOf(3).equals(role);
+        }
+        if("/hospital/doctor/index".equals(path)){
+            return Integer.valueOf(2).equals(role);
+        }
+        return !isDoctorWorkflow(path)||Integer.valueOf(2).equals(role);
+    }
+
+    private boolean isDoctorWorkflow(String path){
+        return path.startsWith("/doctor/seekMedicalAdvice")
+                ||path.startsWith("/doctor/seek/")
+                ||path.startsWith("/doctor/drug")
+                ||path.startsWith("/doctor/zation")
+                ||path.startsWith("/doctor/medicalhistory/")
+                ||path.startsWith("/doctor/seekinfo")
+                ||path.startsWith("/doctor/printseek/");
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
