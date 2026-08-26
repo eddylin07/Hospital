@@ -21,4 +21,5 @@ public interface AppointmentMapper {
     List<Appointment> selectByPatientId(@Param("patientid")Integer patientId);
     List<Appointment> selectByDoctorId(@Param("doctorId")Integer doctorId,List<Integer> patientids,String time);
     Integer selectTheLast(@Param("patientid")Integer patientId);
+    int countByDoctorAndPatient(@Param("doctorId")Integer doctorId,@Param("patientId")Integer patientId);
 }
