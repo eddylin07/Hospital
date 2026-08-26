@@ -57,6 +57,10 @@
     select max(id) from appointment
     where patientid = #{patientid}
   </select>
+  <select id="countByDoctorAndPatient" resultType="int">
+    select count(1) from appointment
+    where doctorid = #{doctorId} and patientid = #{patientId}
+  </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultType="com.hospital.entity.Appointment">
     select a.*,p.name as patientname,d.name as doctorname,d.department as department
     from appointment a
@@ -70,7 +74,7 @@
     delete from appointment
     where id = #{id,jdbcType=INTEGER}
   </delete>
-  <insert id="insert" parameterType="com.hospital.entity.Appointment">
+  <insert id="insert" parameterType="com.hospital.entity.Appointment" useGeneratedKeys="true" keyProperty="id">
     insert into appointment (patientid, doctorid,
       time,expenses)
     values (#{patientid,jdbcType=INTEGER}, #{doctorid,jdbcType=INTEGER},
