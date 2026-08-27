@@ -14,3 +14,4 @@
 ## Investigation notes
 
 - For critical bug investigations, prioritize auth/session handling, role authorization, patient appointment ownership, doctor-patient workflow authorization, prescription stock integrity, latest seek-row updates, PDF null handling, and build/test compatibility.
+- On 2026-08-27, fixed prescription dispensing data integrity: `SeekMapper.updateDrugs` must update only the patient's latest seek row, `DrugsMapper.updateNumber` must atomically guard `number >= requested`, and `PatientServiceImpl.seek` must reject insufficient stock before writing patient/seek rows. `mvn test` passed with 4 tests.
