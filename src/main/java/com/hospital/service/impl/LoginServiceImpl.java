@@ -10,6 +10,9 @@ import com.hospital.entity.Patient;
 import com.hospital.service.LoginService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.NoTransactionException;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.List;
 @Service
@@ -61,6 +64,11 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public String login(Login  login) {
+        if (login == null || isBlank(login.getUsername())) {
+            return "用户名不存在";
+        }
+        login.setId(null);
+        login.setRole(null);
         String message="";
         Login login2=loginMapper.findByUsername(login.getUsername());
         if(login2!=null){
@@ -80,17 +88,34 @@ public class LoginServiceImpl implements LoginService {
     }
 
     @Override
+    @Transactional
     public String regist(Login login) {
+        if (login == null || isBlank(login.getUsername())) {
+            return CommonService.add_message_error;
+        }
+        if(loginMapper.findByUsername(login.getUsername())!=null){
+            return "该用户名已被注册";
+        }
+        if(isBlank(login.getCertId())){
+            return "该证件信息未入库，不能注册该医生或者患者";
+        }
         String message;
         Doctor doctor=doctorMapper.getDoctorByCertId(login.getCertId());
         Patient patient=patientMapper.findPatientByCertId(login.getCertId());
         if(doctor!=null){
             if(doctor.getLoginid()==null){
                 login.setRole(2);
-                loginMapper.insert(login);
-                doctor.setLoginid(loginMapper.findByUsername(login.getUsername()).getId());
-                doctorMapper.updateByPrimaryKeySelective(doctor);
-                message="注册成功";
+                if (loginMapper.insert(login) > 0) {
+                    Login savedLogin = loginMapper.findByUsername(login.getUsername());
+                    if (savedLogin != null) {
+                        doctor.setLoginid(savedLogin.getId());
+                        message=doctorMapper.updateByPrimaryKeySelective(doctor)>0?"注册成功":CommonService.add_message_error;
+                    } else {
+                        message=CommonService.add_message_error;
+                    }
+                } else {
+                    message=CommonService.add_message_error;
+                }
             }
             else {
                 message="该证件号已被注册";
@@ -100,26 +125,40 @@ public class LoginServiceImpl implements LoginService {
         else if(patient!=null){
             if(patient.getLoginid()==null){
                 login.setRole(3);
-                loginMapper.insert(login);
-                patient.setLoginid(loginMapper.findByUsername(login.getUsername()).getId());
-                patientMapper.updateByPrimaryKeySelective(patient);
-                message="注册成功";
+                if (loginMapper.insert(login) > 0) {
+                    Login savedLogin = loginMapper.findByUsername(login.getUsername());
+                    if (savedLogin != null) {
+                        patient.setLoginid(savedLogin.getId());
+                        message=patientMapper.updateByPrimaryKeySelective(patient)>0?"注册成功":CommonService.add_message_error;
+                    } else {
+                        message=CommonService.add_message_error;
+                    }
+                } else {
+                    message=CommonService.add_message_error;
+                }
             }
             else {
                 message="该证件号已被注册";
             }
         }
-        else if(loginMapper.findByUsername(login.getUsername())!=null){
-            message="该用户名已被注册";
-        }
-        else if(loginMapper.findByUsername(login.getUsername())==null&&(login.getCertId()==null||login.getCertId().trim().equals(""))){
-            login.setRole(1);
-            loginMapper.insert(login);
-            message="注册成功";
-        }
         else {
             message="该证件信息未入库，不能注册该医生或者患者";
         }
+        if (CommonService.add_message_error.equals(message)) {
+            markRollbackOnly();
+        }
         return message;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private void markRollbackOnly() {
+        try {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        } catch (NoTransactionException ignored) {
+            // Unit tests may call the service without a Spring transaction proxy.
+        }
     }
 }
