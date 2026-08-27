@@ -8,6 +8,7 @@ import com.hospital.entity.Drugs;
 import com.hospital.entity.Hospitalization;
 import com.hospital.entity.Login;
 import com.hospital.entity.Patient;
+import com.hospital.entity.Seek;
 import com.hospital.service.AppointmentService;
 import com.hospital.service.DoctorService;
 import com.hospital.service.DrugsService;
@@ -58,6 +59,16 @@ public class DoctorControllerTest {
         assertEquals(1, patientService.seekCalls);
         assertEquals(Integer.valueOf(7), patientService.lastSeekPatient.getId());
         assertEquals("3@1", patientService.lastSeekPatient.getDrugsids());
+    }
+
+    @Test
+    public void printSeekReturnsControlledMessageWhenSeekRecordIsMissing() {
+        DoctorController controller = controllerWithAssignedPatient(7);
+        controller.seekService = new FakeSeekService();
+
+        JSONObject response = controller.printseek(7, doctorSession());
+
+        assertEquals("暂无就诊单", response.getString("message"));
     }
 
     private DoctorController controllerWithAssignedPatient(Integer patientId) {
@@ -237,6 +248,18 @@ public class DoctorControllerTest {
         @Override
         public Map<String, List> serrchInfo(String name, String type) {
             return Collections.emptyMap();
+        }
+    }
+
+    private static class FakeSeekService implements SeekService {
+        @Override
+        public String addSeek(Seek seek) {
+            return "";
+        }
+
+        @Override
+        public Seek getSeekByPatientId(Integer patientid) {
+            return null;
         }
     }
 }

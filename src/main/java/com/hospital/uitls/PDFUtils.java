@@ -48,14 +48,22 @@ public class PDFUtils {
 //        createSeekInfo(new Seek("浑身不舒服","花柳病","1,2,3,4,5",12,new BigDecimal("32.6"),"张安"));
 //    }
     public static String createSeekInfo(Seek seek, OptionService optionService, String path) {
-        List ids=PatientDoctorutils.getOptionIds(seek.getOptions());
-        List<Option> options=new ArrayList<>();
-        ids.forEach(id->{
-          Option option =optionService.getOption((Integer)id);
-            options.add(option);
-        });
+        if (seek == null || isBlank(seek.getOptions())) {
+            return "暂无就诊单";
+        }
         Document document = new Document();
         try {
+            List ids=PatientDoctorutils.getOptionIds(seek.getOptions());
+            List<Option> options=new ArrayList<>();
+            ids.forEach(id->{
+              Option option =optionService.getOption((Integer)id);
+                if (option != null) {
+                    options.add(option);
+                }
+            });
+            if (options.size() != ids.size()) {
+                return "系统内部错误，生成失败";
+            }
             String str="";
             for(int i=0;i<options.size();i++){
                 str+=options.get(i).getName()+"----"+options.get(i).getType()+"("+options.get(i).getPrice()+"元)\n";
@@ -92,6 +100,9 @@ public class PDFUtils {
     }
 
     public static String createAppointMent(Appointment appointment,String path) {
+        if (appointment == null) {
+            return "暂无预约单";
+        }
         Document document = new Document();
         try {
             PdfWriter.getInstance(document, new FileOutputStream(path+appointment.getPatientname()+DateUtils.date2String(new Date())+"挂号单.pdf"));
@@ -125,9 +136,13 @@ public class PDFUtils {
     }
 
     private static void createCell(String text, int colspan, PdfPTable pdfPTable, Font font) {
-        PdfPCell cell = new PdfPCell(new Paragraph(text, font));
+        PdfPCell cell = new PdfPCell(new Paragraph(text == null ? "" : text, font));
         cell.setColspan(colspan);
         pdfPTable.addCell(cell);
 
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 }

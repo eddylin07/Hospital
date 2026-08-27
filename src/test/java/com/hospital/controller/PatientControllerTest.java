@@ -51,6 +51,28 @@ public class PatientControllerTest {
         assertEquals(Integer.valueOf(55), patientService.updatedAppointmentPatient.getAppointmentid());
     }
 
+    @Test
+    public void downloadPdfReturnsControlledMessageWhenPatientHasNoAppointment() {
+        PatientController controller = new PatientController();
+        FakePatientService patientService = new FakePatientService();
+        FakeAppointmentService appointmentService = new FakeAppointmentService();
+        Patient sessionPatient = new Patient();
+        sessionPatient.setId(7);
+        patientService.sessionPatient = sessionPatient;
+        controller.patientService = patientService;
+        controller.appointmentService = appointmentService;
+
+        MockHttpSession session = new MockHttpSession();
+        Login login = new Login();
+        login.setId(12);
+        login.setRole(3);
+        session.setAttribute("login", login);
+
+        JSONObject response = controller.downloadpdf(session);
+
+        assertEquals("暂无预约单", response.getString("message"));
+    }
+
     private static class FakePatientService implements PatientService {
         Patient sessionPatient;
         Patient updatedAppointmentPatient;

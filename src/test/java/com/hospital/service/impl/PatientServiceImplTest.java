@@ -53,6 +53,29 @@ public class PatientServiceImplTest {
     }
 
     @Test
+    public void seekRejectsEmptyDrugSelectionBeforeWritingAnything() {
+        PatientServiceImpl service = new PatientServiceImpl();
+        FakePatientMapper patientMapper = new FakePatientMapper();
+        FakeSeekMapper seekMapper = new FakeSeekMapper();
+        FakeDrugsMapper drugsMapper = new FakeDrugsMapper();
+        service.patientMapper = patientMapper;
+        service.seekMapper = seekMapper;
+        service.drugsMapper = drugsMapper;
+
+        Patient patient = new Patient();
+        patient.setId(7);
+        patient.setDrugsids("");
+
+        String message = service.seek(patient);
+
+        assertEquals(CommonService.upd_message_error, message);
+        assertEquals(0, drugsMapper.updateNumberCalls);
+        assertEquals(0, patientMapper.updateSelectiveCalls);
+        assertEquals(0, seekMapper.updateDrugsCalls);
+    }
+
+
+    @Test
     public void seekStopsBeforePatientAndSeekUpdatesWhenAtomicStockDeductionFails() {
         PatientServiceImpl service = new PatientServiceImpl();
         FakePatientMapper patientMapper = new FakePatientMapper();
