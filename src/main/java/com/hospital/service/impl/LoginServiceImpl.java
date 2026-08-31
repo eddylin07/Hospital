@@ -10,6 +10,9 @@ import com.hospital.entity.Patient;
 import com.hospital.service.LoginService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.NoTransactionException;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.List;
 @Service
@@ -62,6 +65,8 @@ public class LoginServiceImpl implements LoginService {
     @Override
     public String login(Login  login) {
         String message="";
+        login.setId(null);
+        login.setRole(null);
         Login login2=loginMapper.findByUsername(login.getUsername());
         if(login2!=null){
             if(!login2.getPassword().equals(login.getPassword())){
@@ -80,17 +85,35 @@ public class LoginServiceImpl implements LoginService {
     }
 
     @Override
+    @Transactional
     public String regist(Login login) {
         String message;
+        if(loginMapper.findByUsername(login.getUsername())!=null){
+            return "该用户名已被注册";
+        }
+        if(login.getCertId()==null||login.getCertId().trim().equals("")){
+            return "该证件信息未入库，不能注册该医生或者患者";
+        }
         Doctor doctor=doctorMapper.getDoctorByCertId(login.getCertId());
         Patient patient=patientMapper.findPatientByCertId(login.getCertId());
         if(doctor!=null){
             if(doctor.getLoginid()==null){
                 login.setRole(2);
-                loginMapper.insert(login);
-                doctor.setLoginid(loginMapper.findByUsername(login.getUsername()).getId());
-                doctorMapper.updateByPrimaryKeySelective(doctor);
-                message="注册成功";
+                if(loginMapper.insert(login)<=0){
+                    return CommonService.add_message_error;
+                }
+                Login createdLogin=loginMapper.findByUsername(login.getUsername());
+                if(createdLogin==null){
+                    markRollbackOnly();
+                    return CommonService.add_message_error;
+                }
+                doctor.setLoginid(createdLogin.getId());
+                if(doctorMapper.updateByPrimaryKeySelective(doctor)>0){
+                    message="注册成功";
+                }else {
+                    markRollbackOnly();
+                    message=CommonService.add_message_error;
+                }
             }
             else {
                 message="该证件号已被注册";
@@ -100,26 +123,36 @@ public class LoginServiceImpl implements LoginService {
         else if(patient!=null){
             if(patient.getLoginid()==null){
                 login.setRole(3);
-                loginMapper.insert(login);
-                patient.setLoginid(loginMapper.findByUsername(login.getUsername()).getId());
-                patientMapper.updateByPrimaryKeySelective(patient);
-                message="注册成功";
+                if(loginMapper.insert(login)<=0){
+                    return CommonService.add_message_error;
+                }
+                Login createdLogin=loginMapper.findByUsername(login.getUsername());
+                if(createdLogin==null){
+                    markRollbackOnly();
+                    return CommonService.add_message_error;
+                }
+                patient.setLoginid(createdLogin.getId());
+                if(patientMapper.updateByPrimaryKeySelective(patient)>0){
+                    message="注册成功";
+                }else {
+                    markRollbackOnly();
+                    message=CommonService.add_message_error;
+                }
             }
             else {
                 message="该证件号已被注册";
             }
         }
-        else if(loginMapper.findByUsername(login.getUsername())!=null){
-            message="该用户名已被注册";
-        }
-        else if(loginMapper.findByUsername(login.getUsername())==null&&(login.getCertId()==null||login.getCertId().trim().equals(""))){
-            login.setRole(1);
-            loginMapper.insert(login);
-            message="注册成功";
-        }
         else {
             message="该证件信息未入库，不能注册该医生或者患者";
         }
         return message;
+    }
+
+    private void markRollbackOnly(){
+        try{
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }catch (NoTransactionException ignored){
+        }
     }
 }

@@ -70,7 +70,7 @@
     delete from appointment
     where id = #{id,jdbcType=INTEGER}
   </delete>
-  <insert id="insert" parameterType="com.hospital.entity.Appointment">
+  <insert id="insert" parameterType="com.hospital.entity.Appointment" useGeneratedKeys="true" keyProperty="id">
     insert into appointment (patientid, doctorid,
       time,expenses)
     values (#{patientid,jdbcType=INTEGER}, #{doctorid,jdbcType=INTEGER},
