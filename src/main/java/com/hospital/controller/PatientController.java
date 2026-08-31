@@ -1,6 +1,7 @@
 package com.hospital.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hospital.common.CommonService;
 import com.hospital.entity.Appointment;
 import com.hospital.entity.Hospitalization;
 import com.hospital.entity.Login;
@@ -10,6 +11,9 @@ import com.hospital.uitls.PDFUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.NoTransactionException;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -97,13 +101,29 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject appointment(@RequestBody Appointment appointment){
+    @Transactional
+    public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
+        Login login=(Login)session.getAttribute("login");
+        Patient currentPatient=patientService.findPatientByLoginId(login.getId());
+        if(currentPatient==null){
+            json.put("message","当前患者信息不存在");
+            return json;
+        }
+        appointment.setPatientid(currentPatient.getId());
         Patient patient=new Patient();
         String message=appointmentService.addAppointment(appointment);
-        patient.setAppointmentid(appointmentService.selectTheLastAppointment(appointment.getPatientid()));
-        patient.setId(appointment.getPatientid());
-        patientService.updateAppointMent(patient);
+        if(CommonService.add_message_success.equals(message)&&appointment.getId()!=null){
+            patient.setAppointmentid(appointment.getId());
+            patient.setId(currentPatient.getId());
+            message=patientService.updateAppointMent(patient);
+            if(!CommonService.upd_message_success.equals(message)){
+                markRollbackOnly();
+            }
+        }else if(CommonService.add_message_success.equals(message)){
+            markRollbackOnly();
+            message=CommonService.add_message_error;
+        }
         json.put("message",message);
         return json;
     }
@@ -130,8 +150,19 @@ public class PatientController {
         Patient patient=patientService.findPatientByLoginId(login.getId());
         Integer idlast=appointmentService.selectTheLastAppointment(patient.getId());
         Appointment appointment=appointmentService.getAppointment(idlast);
+        if(appointment==null){
+            json.put("message","未找到预约信息");
+            return json;
+        }
         //createAppointMent，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         json.put("message",PDFUtils.createAppointMent(appointment,path));
         return json;
+    }
+
+    private void markRollbackOnly(){
+        try{
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }catch (NoTransactionException ignored){
+        }
     }
 }

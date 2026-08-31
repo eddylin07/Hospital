@@ -20,14 +20,46 @@ public class LoginInterceptor implements HandlerInterceptor {
         //这里的User是登陆时放入session的
         Login login = (Login) session.getAttribute("login");
         //如果session中没有user，表示没登陆
-        if (login == null){
+        if (login == null||login.getId()==null||login.getRole()==null){
             //这个方法返回false表示忽略当前请求，如果一个用户调用了需要登陆才能使用的接口，如果他没有登陆这里会直接忽略掉
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
+        }
+        String uri=request.getRequestURI();
+        String contextPath=request.getContextPath();
+        if(contextPath!=null&&!contextPath.equals("")&&uri.startsWith(contextPath)){
+            uri=uri.substring(contextPath.length());
+        }
+        if(requiresRole(uri,login.getRole())){
             return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+        response.sendRedirect("/hospital/login");
+        return false;
+    }
+
+    private boolean requiresRole(String uri,Integer role){
+        if(uri.startsWith("/admin/")||uri.equals("/hospital/admin/index")){
+            return role==1;
+        }
+        if(uri.startsWith("/patient/")||uri.equals("/hospital/patient/index")){
+            return role==3;
+        }
+        if(isDoctorWorkflow(uri)){
+            return role==2;
+        }
+        return true;
+    }
+
+    private boolean isDoctorWorkflow(String uri){
+        return uri.equals("/hospital/doctor/index")
+                ||uri.equals("/doctor/seekMedicalAdvice")
+                ||uri.startsWith("/doctor/seek/")
+                ||uri.equals("/doctor/drug")
+                ||uri.equals("/doctor/zation")
+                ||uri.startsWith("/doctor/medicalhistory/")
+                ||uri.equals("/doctor/seekinfo")
+                ||uri.startsWith("/doctor/printseek/");
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
