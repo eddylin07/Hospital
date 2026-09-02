@@ -48,11 +48,16 @@ public class PDFUtils {
 //        createSeekInfo(new Seek("浑身不舒服","花柳病","1,2,3,4,5",12,new BigDecimal("32.6"),"张安"));
 //    }
     public static String createSeekInfo(Seek seek, OptionService optionService, String path) {
+        if (seek == null || seek.getOptions() == null || seek.getOptions().trim().equals("")) {
+            return "未找到就诊信息";
+        }
         List ids=PatientDoctorutils.getOptionIds(seek.getOptions());
         List<Option> options=new ArrayList<>();
         ids.forEach(id->{
           Option option =optionService.getOption((Integer)id);
-            options.add(option);
+            if (option != null) {
+                options.add(option);
+            }
         });
         Document document = new Document();
         try {
@@ -60,7 +65,7 @@ public class PDFUtils {
             for(int i=0;i<options.size();i++){
                 str+=options.get(i).getName()+"----"+options.get(i).getType()+"("+options.get(i).getPrice()+"元)\n";
             }
-            PdfWriter.getInstance(document, new FileOutputStream(path+seek.getPatientname()+DateUtils.date2String(new Date())+"就诊单.pdf"));
+            PdfWriter.getInstance(document, new FileOutputStream(normalizePath(path)+seek.getPatientname()+DateUtils.date2String(new Date())+"就诊单.pdf"));
             document.open();
             PdfPTable pdfPTable = new PdfPTable(4);
             createCell("诊断书", 4, pdfPTable, font);
@@ -92,9 +97,12 @@ public class PDFUtils {
     }
 
     public static String createAppointMent(Appointment appointment,String path) {
+        if (appointment == null) {
+            return "未找到预约信息";
+        }
         Document document = new Document();
         try {
-            PdfWriter.getInstance(document, new FileOutputStream(path+appointment.getPatientname()+DateUtils.date2String(new Date())+"挂号单.pdf"));
+            PdfWriter.getInstance(document, new FileOutputStream(normalizePath(path)+appointment.getPatientname()+DateUtils.date2String(new Date())+"挂号单.pdf"));
             document.open();
             PdfPTable pdfPTable = new PdfPTable(4);
             createCell("挂号单", 4, pdfPTable, font);
@@ -122,6 +130,16 @@ public class PDFUtils {
     private static String date2String(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("YYYY年MM月dd日");
         return sdf.format(date);
+    }
+
+    private static String normalizePath(String path) {
+        if (path == null || path.trim().equals("")) {
+            return "";
+        }
+        if (path.endsWith("/") || path.endsWith("\\")) {
+            return path;
+        }
+        return path + "/";
     }
 
     private static void createCell(String text, int colspan, PdfPTable pdfPTable, Font font) {
