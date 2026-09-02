@@ -9,8 +9,11 @@ import com.hospital.entity.Seek;
 import com.hospital.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,32 +85,69 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
+    @Transactional
     public String seek(Patient patient) {
         Seek seek = new Seek();
         String drugsids=patient.getDrugsids();
+        if (drugsids == null || drugsids.trim().equals("")) {
+            return "请选择药品";
+        }
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
+        List<DispenseItem> dispenseItems = new ArrayList<>();
         for(String drug:drugsids.split(",")){
-          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
-          BigDecimal drugprice=drugs.getPrice();
-          Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
-          Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
-          }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
-          }
+            String[] parts = drug.split("@");
+            if (parts.length != 2) {
+                return "药品信息格式错误";
+            }
+            Integer drugId;
+            Integer drugnumber;
+            try {
+                drugId = Integer.parseInt(parts[0]);
+                drugnumber = Integer.parseInt(parts[1]);
+            } catch (NumberFormatException e) {
+                return "药品数量格式错误";
+            }
+            if (drugnumber <= 0) {
+                return "药品数量必须大于0";
+            }
+            Drugs drugs=drugsMapper.selectByPrimaryKey(drugId);
+            if (drugs == null || drugs.getPrice() == null || drugs.getNumber() == null) {
+                return "药品信息不存在";
+            }
+            Integer realnumber=drugs.getNumber();
+            if(realnumber < drugnumber){
+                return "对不起"+drugs.getName()+"数量不足";
+            }
+            dispenseItems.add(new DispenseItem(drugs, drugnumber));
+            price=price.add(drugs.getPrice().multiply(BigDecimal.valueOf(drugnumber)));
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
-        return message;
+        for (DispenseItem item : dispenseItems) {
+            Drugs update = new Drugs();
+            update.setId(item.drugs.getId());
+            update.setNumber(item.quantity);
+            if (drugsMapper.updateNumber(update) <= 0) {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                return "药品库存不足";
+            }
+        }
+        if (patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) {
+            return CommonService.upd_message_success;
+        }
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        return CommonService.upd_message_error;
+    }
+
+    private static class DispenseItem {
+        private final Drugs drugs;
+        private final Integer quantity;
+
+        private DispenseItem(Drugs drugs, Integer quantity) {
+            this.drugs = drugs;
+            this.quantity = quantity;
+        }
     }
 
     @Override
