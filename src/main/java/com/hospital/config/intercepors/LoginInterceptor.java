@@ -47,6 +47,15 @@ public class LoginInterceptor implements HandlerInterceptor {
         if (path.startsWith("/patient/")) {
             return ROLE_PATIENT == role;
         }
+        if (path.equals("/hospital/admin/index")) {
+            return ROLE_ADMIN == role;
+        }
+        if (path.equals("/hospital/doctor/index")) {
+            return ROLE_DOCTOR == role;
+        }
+        if (path.equals("/hospital/patient/index")) {
+            return ROLE_PATIENT == role;
+        }
         if (isDoctorWorkflowPath(path)) {
             return ROLE_DOCTOR == role;
         }

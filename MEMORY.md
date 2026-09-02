@@ -16,4 +16,4 @@
 ## Current session notes
 
 - 2026-09-02: Initialized AGENTS.md and MEMORY.md from inferred project facts because templates were unavailable.
-- 2026-09-02: Fixed critical auth/session, role authorization, public admin self-registration, patient appointment IDOR, doctor workflow patient authorization, prescription inventory overdraw/race/partial-update, latest-seek-row prescription updates, empty input crashes, missing appointment/seek PDF crashes, MyBatis multi-parameter binding, long prescription SQL truncation, and Linux-friendly PDF output paths. Validation: `mvn test` passed with 17 tests on Java 8 / Maven 3.8.7.
+- 2026-09-02: Fixed critical auth/session, role authorization, public admin self-registration, patient appointment IDOR, doctor workflow patient authorization, prescription inventory overdraw/race/partial-update, latest-seek-row prescription updates, empty input crashes, missing appointment/seek PDF crashes, MyBatis multi-parameter binding, long prescription SQL truncation, Linux-friendly PDF output paths, and public hospital content page allowlisting. Validation: `mvn test` passed with 19 tests on Java 8 / Maven 3.8.7.

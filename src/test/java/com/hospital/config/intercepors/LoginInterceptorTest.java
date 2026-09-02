@@ -46,6 +46,19 @@ public class LoginInterceptorTest {
         Assert.assertTrue(allowed);
     }
 
+    @Test
+    public void forbidsPatientFromAdminLandingPage() throws Exception {
+        LoginInterceptor interceptor = new LoginInterceptor();
+        MockHttpServletRequest request = request("/hospital/admin/index");
+        request.getSession().setAttribute("login", login(7, 3));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        boolean allowed = interceptor.preHandle(request, response, new Object());
+
+        Assert.assertFalse(allowed);
+        Assert.assertEquals(403, response.getStatus());
+    }
+
     private MockHttpServletRequest request(String path) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI(path);
