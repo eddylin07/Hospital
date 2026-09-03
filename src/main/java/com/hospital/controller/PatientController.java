@@ -97,13 +97,22 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject appointment(@RequestBody Appointment appointment){
+    public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
+        Login login=(Login)session.getAttribute("login");
+        Patient currentPatient=patientService.findPatientByLoginId(login.getId());
+        if(currentPatient==null){
+            json.put("message","当前登录用户不是患者");
+            return json;
+        }
         Patient patient=new Patient();
+        appointment.setPatientid(currentPatient.getId());
         String message=appointmentService.addAppointment(appointment);
-        patient.setAppointmentid(appointmentService.selectTheLastAppointment(appointment.getPatientid()));
-        patient.setId(appointment.getPatientid());
-        patientService.updateAppointMent(patient);
+        if("添加成功".equals(message)){
+            patient.setAppointmentid(appointment.getId()!=null?appointment.getId():appointmentService.selectTheLastAppointment(currentPatient.getId()));
+            patient.setId(currentPatient.getId());
+            patientService.updateAppointMent(patient);
+        }
         json.put("message",message);
         return json;
     }
@@ -128,8 +137,16 @@ public class PatientController {
         JSONObject json=new JSONObject();
         Login login=(Login)session.getAttribute("login");
         Patient patient=patientService.findPatientByLoginId(login.getId());
+        if(patient==null){
+            json.put("message","当前登录用户不是患者");
+            return json;
+        }
         Integer idlast=appointmentService.selectTheLastAppointment(patient.getId());
         Appointment appointment=appointmentService.getAppointment(idlast);
+        if(appointment==null){
+            json.put("message","未找到预约信息");
+            return json;
+        }
         //createAppointMent，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         json.put("message",PDFUtils.createAppointMent(appointment,path));
         return json;
