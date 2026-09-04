@@ -70,4 +70,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     public Integer selectTheLastAppointment(Integer patientId) {
         return appointmentMapper.selectTheLast(patientId);
     }
+
+    @Override
+    public boolean hasAppointmentWithDoctor(Integer doctorId, Integer patientId) {
+        if (doctorId == null || patientId == null) {
+            return false;
+        }
+        Integer count=appointmentMapper.countByDoctorAndPatient(doctorId,patientId);
+        return count != null && count > 0;
+    }
 }
