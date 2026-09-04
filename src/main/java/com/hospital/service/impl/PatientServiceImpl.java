@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -88,26 +89,27 @@ public class PatientServiceImpl implements PatientService {
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
+        Map<Drugs, Integer> drugsNumbers = new LinkedHashMap<>();
         for(String drug:drugsids.split(",")){
-          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
+          String[] drugInfo = drug.split("@");
+          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drugInfo[0]));
           BigDecimal drugprice=drugs.getPrice();
-          Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
+          Integer drugnumber=Integer.parseInt(drugInfo[1]);
           Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
+          if(drugnumber <= 0 || realnumber < drugnumber){
+              return "对不起"+drugs.getNumber()+"数量不足";
           }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
-          }
+          price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
+          drugsNumbers.put(drugs, drugnumber);
+        }
+        boolean drugsUpdated = true;
+        for (Map.Entry<Drugs, Integer> entry : drugsNumbers.entrySet()) {
+            Drugs drugs = entry.getKey();
+            drugs.setNumber(entry.getValue());
+            drugsUpdated = drugsMapper.updateNumber(drugs) > 0 && drugsUpdated;
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
-        return message;
+        return (drugsUpdated && patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
     }
 
     @Override
