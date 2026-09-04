@@ -9,6 +9,8 @@ import com.hospital.entity.Seek;
 import com.hospital.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -48,6 +50,9 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public Patient getPatient(Integer id) {
         Patient patient = patientMapper.selectByPrimaryKey(id);
+        if (patient == null) {
+            return null;
+        }
         Login login = loginMapper.selectByPrimaryKey(patient.getLoginid());
         if (login != null) {
             patient.setUsername(login.getUsername());
@@ -82,32 +87,80 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
+    @Transactional
     public String seek(Patient patient) {
         Seek seek = new Seek();
         String drugsids=patient.getDrugsids();
+        if(patient.getId()==null||drugsids==null||drugsids.trim().isEmpty()){
+            return "请选择药品";
+        }
+        if(seekMapper.getSeekByPatientId(patient.getId())==null){
+            return "请先生成就诊信息";
+        }
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
+        boolean inventoryChanged=false;
         for(String drug:drugsids.split(",")){
-          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
-          BigDecimal drugprice=drugs.getPrice();
-          Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
-          Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
-          }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
-          }
+            String[] parts=drug.split("@");
+            if(parts.length!=2){
+                markRollbackIfNeeded(inventoryChanged);
+                return "药品信息错误";
+            }
+            Integer drugId=parseInteger(parts[0]);
+            Integer drugnumber=parseInteger(parts[1]);
+            if(drugId==null||drugnumber==null||drugnumber<=0){
+                markRollbackIfNeeded(inventoryChanged);
+                return "药品信息错误";
+            }
+            Drugs drugs=drugsMapper.selectByPrimaryKey(drugId);
+            if(drugs==null||drugs.getPrice()==null||drugs.getNumber()==null){
+                markRollbackIfNeeded(inventoryChanged);
+                return "药品信息错误";
+            }
+            Integer realnumber=drugs.getNumber();
+            if(realnumber<drugnumber){
+                markRollbackIfNeeded(inventoryChanged);
+                return "对不起"+drugs.getName()+"数量不足";
+            }
+            drugs.setNumber(drugnumber);
+            if(drugsMapper.updateNumber(drugs)!=1){
+                markRollbackOnly();
+                return "对不起"+drugs.getName()+"数量不足";
+            }
+            inventoryChanged=true;
+            price=price.add(drugs.getPrice().multiply(BigDecimal.valueOf(drugnumber)));
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
-        return message;
+        if(patientMapper.updateByPrimaryKeySelective(patient) <= 0 || seekMapper.updateDrugs(seek) <= 0){
+            markRollbackOnly();
+            return CommonService.upd_message_error;
+        }
+        return CommonService.upd_message_success;
+    }
+
+    private Integer parseInteger(String value){
+        if(value==null){
+            return null;
+        }
+        try {
+            return Integer.parseInt(value);
+        }catch (NumberFormatException e){
+            return null;
+        }
+    }
+
+    private void markRollbackOnly(){
+        try {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }catch (Exception ignored){
+        }
+    }
+
+    private void markRollbackIfNeeded(boolean inventoryChanged){
+        if(inventoryChanged){
+            markRollbackOnly();
+        }
     }
 
     @Override

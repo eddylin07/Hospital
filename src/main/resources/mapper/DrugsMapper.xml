@@ -5,6 +5,9 @@
     <id column="id" jdbcType="INTEGER" property="id" />
     <result column="name" jdbcType="VARCHAR" property="name" />
     <result column="type" jdbcType="INTEGER" property="type" />
+    <result column="price" jdbcType="DECIMAL" property="price" />
+    <result column="number" jdbcType="INTEGER" property="number" />
+    <result column="text" jdbcType="VARCHAR" property="text" />
   </resultMap>
   <sql id="Base_Column_List">
     id, name, type
@@ -81,7 +84,7 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
   <update id="updateNumber" parameterType="com.hospital.entity.Drugs">
-    update drugs set number=number-#{number} where id=#{id}
+    update drugs set number=number-#{number} where id=#{id} and number &gt;= #{number}
   </update>
   <select id="getDrugsByName" resultType="com.hospital.entity.Drugs" parameterType="String">
     select * from drugs where name like concat('%',#{name},'%')
