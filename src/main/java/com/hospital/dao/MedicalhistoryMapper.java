@@ -2,7 +2,6 @@ package com.hospital.dao;
 
 import com.hospital.entity.Medicalhistory;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -19,5 +18,5 @@ public interface MedicalhistoryMapper {
     int updateByPrimaryKeySelective(Medicalhistory record);
 
     int updateByPrimaryKey(Medicalhistory record);
-    List<Medicalhistory> findAll(List<Integer> doctorids,List<Integer> patientids);
+    List<Medicalhistory> findAll(@Param("doctorids")List<Integer> doctorids,@Param("patientids")List<Integer> patientids);
 }

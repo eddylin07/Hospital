@@ -14,4 +14,5 @@ public interface AppointmentService {
     List<Appointment> getPatientMessage(Integer patientId);
     List<Appointment> selectByDoctorId(Integer doctorId,String patientname,String time);
     Integer selectTheLastAppointment(Integer patientId);
+    boolean isPatientAssignedToDoctor(Integer doctorId,Integer patientId);
 }

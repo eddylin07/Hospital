@@ -12,6 +12,9 @@ import javax.servlet.http.HttpSession;
  
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
+    private static final int ROLE_ADMIN = 1;
+    private static final int ROLE_DOCTOR = 2;
+    private static final int ROLE_PATIENT = 3;
  
     //这个方法是在访问接口之前执行的，我们只需要在这里写验证登陆状态的业务逻辑，就可以在用户调用指定接口之前验证登陆状态了
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -26,8 +29,44 @@ public class LoginInterceptor implements HandlerInterceptor {
             response.sendRedirect("/hospital/login");
             return false;
         }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
+            String uri = request.getRequestURI();
+            String contextPath = request.getContextPath();
+            if (contextPath != null && !contextPath.isEmpty() && uri.startsWith(contextPath)) {
+                uri = uri.substring(contextPath.length());
+            }
+            if (!isAuthorized(login, uri)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return false;
+            }
+            return true;    //如果session里有合法角色的login，放行，用户即可继续调用自己需要的接口
         }
+    }
+
+    private boolean isAuthorized(Login login, String uri) {
+        Integer role = login.getRole();
+        if (role == null) {
+            return false;
+        }
+        if (uri.startsWith("/admin/")) {
+            return role == ROLE_ADMIN;
+        }
+        if (isDoctorWorkflow(uri)) {
+            return role == ROLE_DOCTOR;
+        }
+        if (uri.startsWith("/patient/")) {
+            return role == ROLE_PATIENT;
+        }
+        return true;
+    }
+
+    private boolean isDoctorWorkflow(String uri) {
+        return uri.equals("/doctor/seekMedicalAdvice")
+                || uri.startsWith("/doctor/seek/")
+                || uri.equals("/doctor/drug")
+                || uri.equals("/doctor/zation")
+                || uri.startsWith("/doctor/medicalhistory/")
+                || uri.equals("/doctor/seekinfo")
+                || uri.startsWith("/doctor/printseek/");
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
