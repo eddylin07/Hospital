@@ -57,6 +57,9 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     public Doctor getDoctor(Integer id) {
         Doctor doctor=doctorMapper.selectByPrimaryKey(id);
+        if(doctor==null){
+            return null;
+        }
         Login login=loginMapper.selectByPrimaryKey(doctor.getLoginid());
         if(login!=null){
             doctor.setUsername(login.getUsername());
@@ -94,11 +97,19 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     public String seekInfo(Map map) {
         Seek seek=new Seek();
-        seek.setOptions(DrugsUtils.vaild2(map));
-        seek.setDays(Integer.parseInt((String)map.get("days")));
+        String options=DrugsUtils.vaild2(map);
+        if(options.equals("")){
+            return CommonService.add_message_error;
+        }
+        seek.setOptions(options);
+        try{
+            seek.setDays(Long.parseLong((String)map.get("days")));
+            seek.setPatientid(Integer.parseInt((String)map.get("patientid")));
+        }catch (Exception e){
+            return CommonService.add_message_error;
+        }
         seek.setDescribes((String)map.get("describes"));
         seek.setIllname((String)map.get("illname"));
-        seek.setPatientid(Integer.parseInt((String)map.get("patientid")));
         BigDecimal price=optionMapper.getTotalPrice(PatientDoctorutils.getOptionIds(seek.getOptions()));
         seek.setPrice(price);
         Integer index=seekMapper.insert(seek);
