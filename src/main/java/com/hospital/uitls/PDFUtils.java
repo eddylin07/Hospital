@@ -120,7 +120,7 @@ public class PDFUtils {
     }
 
     private static String date2String(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY年MM月dd日");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日");
         return sdf.format(date);
     }
 
