@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,25 +89,27 @@ public class PatientServiceImpl implements PatientService {
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
+        List<Drugs> drugsList = new ArrayList<>();
+        List<Integer> numberList = new ArrayList<>();
         for(String drug:drugsids.split(",")){
           Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
           BigDecimal drugprice=drugs.getPrice();
           Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
           Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
+          if(realnumber<=0 || drugnumber<=0 || drugnumber>realnumber){
+              return "对不起"+drugs.getNumber()+"数量不足";
           }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
-          }
+          price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
+          drugsList.add(drugs);
+          numberList.add(drugnumber);
+        }
+        for(int i=0;i<drugsList.size();i++){
+            Drugs drugs = drugsList.get(i);
+            drugs.setNumber(numberList.get(i));
+            drugsMapper.updateNumber(drugs);
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
+        String message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
         return message;
     }
 
