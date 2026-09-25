@@ -10,4 +10,5 @@
 
 - Prefer focused Maven tests near modified production code.
 - Add regression tests only where behavior or business risk justifies coverage.
+- On branch `cursor/missing-test-coverage-94ff`, `SeekMapperXmlTest` covers `SeekMapper.updateDrugs` so dispensing updates only the latest seek row and null existing prices are billable with `ifnull(price,0)`. Validation command: `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn -Dtest=SeekMapperXmlTest test`.
 
