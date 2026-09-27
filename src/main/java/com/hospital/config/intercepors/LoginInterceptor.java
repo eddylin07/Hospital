@@ -12,6 +12,9 @@ import javax.servlet.http.HttpSession;
  
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
+    private static final int ROLE_ADMIN = 1;
+    private static final int ROLE_DOCTOR = 2;
+    private static final int ROLE_PATIENT = 3;
  
     //这个方法是在访问接口之前执行的，我们只需要在这里写验证登陆状态的业务逻辑，就可以在用户调用指定接口之前验证登陆状态了
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -25,9 +28,45 @@ public class LoginInterceptor implements HandlerInterceptor {
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+        if (!hasRequiredRole(request, login)) {
+            response.sendRedirect("/hospital/login");
+            return false;
+        }
+        return true;    //如果session里有login且角色匹配，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean hasRequiredRole(HttpServletRequest request, Login login) {
+        Integer role = login.getRole();
+        String uri = request.getRequestURI();
+        if (uri.startsWith(request.getContextPath())) {
+            uri = uri.substring(request.getContextPath().length());
+        }
+        if (uri.startsWith("/admin") || uri.startsWith("/hospital/admin")) {
+            return Integer.valueOf(ROLE_ADMIN).equals(role);
+        }
+        if (uri.startsWith("/patient") || uri.startsWith("/hospital/patient")) {
+            return Integer.valueOf(ROLE_PATIENT).equals(role);
+        }
+        if (uri.startsWith("/doctor") || uri.startsWith("/hospital/doctor")) {
+            return isDoctorDepartmentLookup(request, uri) || Integer.valueOf(ROLE_DOCTOR).equals(role);
+        }
+        return true;
+    }
+
+    private boolean isDoctorDepartmentLookup(HttpServletRequest request, String uri) {
+        if (!"GET".equalsIgnoreCase(request.getMethod()) || !uri.startsWith("/doctor/")) {
+            return false;
+        }
+        String remainder = uri.substring("/doctor/".length());
+        return !remainder.isEmpty()
+                && !remainder.contains("/")
+                && !"seekMedicalAdvice".equals(remainder)
+                && !"drug".equals(remainder)
+                && !"zation".equals(remainder)
+                && !"medicalhistory".equals(remainder)
+                && !"seekinfo".equals(remainder)
+                && !"printseek".equals(remainder);
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
