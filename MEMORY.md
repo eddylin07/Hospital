@@ -22,3 +22,4 @@ JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test
 ## History
 
 - Created on 2026-10-01 because the workspace did not include `AGENTS.md` or `MEMORY.md`, and `~/.codex/templates/` did not provide templates.
+- On branch `cursor/missing-test-coverage-d075`, `SeekMapperXmlTest` covers `SeekMapper.updateDrugs` so dispensing updates only the latest seek row and null existing prices remain billable; `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 mvn test` passed with 1 test.
