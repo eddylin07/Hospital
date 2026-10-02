@@ -8,6 +8,7 @@ import java.util.List;
 public interface DrugsMapper {
     int deleteByPrimaryKey(Integer id);
     int updateNumber(Drugs drugs);
+    int updateNumberIfEnough(@Param("id") Integer id, @Param("number") Integer number);
     int insert(Drugs record);
 
     int insertSelective(Drugs record);
