@@ -12,6 +12,8 @@ import javax.servlet.http.HttpSession;
 
 @Controller
 public class LoginController {
+    private static final String LOGIN_SUCCESS_PREFIX = "登录成功";
+
     @Autowired
     LoginService loginService;
     @RequestMapping(value = "/hospital/login")
@@ -63,8 +65,13 @@ public class LoginController {
     @ResponseBody
     public JSONObject login(@RequestBody Login login,HttpSession session){
         JSONObject json=new JSONObject();
-        json.put("message",loginService.login(login));
-        session.setAttribute("login",login);
+        String message=loginService.login(login);
+        json.put("message",message);
+        if(message!=null&&message.startsWith(LOGIN_SUCCESS_PREFIX)&&login.getId()!=null&&login.getRole()!=null){
+            session.setAttribute("login",login);
+        }else {
+            session.removeAttribute("login");
+        }
         return json;
     }
     @RequestMapping(value = "/regest",method = RequestMethod.POST)
