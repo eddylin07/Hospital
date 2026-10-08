@@ -52,7 +52,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     public String addAppointment(Appointment appointment) {
-        return appointmentMapper.insert(appointment)>0?CommonService.add_message_success:CommonService.add_message_error;
+        return appointmentMapper.insert(appointment)>0 && appointment.getId()!=null?CommonService.add_message_success:CommonService.add_message_error;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.hospital.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hospital.common.CommonService;
 import com.hospital.entity.Appointment;
 import com.hospital.entity.Hospitalization;
 import com.hospital.entity.Login;
@@ -97,13 +98,18 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject appointment(@RequestBody Appointment appointment){
+    public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
+        Login login=(Login)session.getAttribute("login");
+        Patient currentPatient=patientService.findPatientByLoginId(login.getId());
+        appointment.setPatientid(currentPatient.getId());
         Patient patient=new Patient();
         String message=appointmentService.addAppointment(appointment);
-        patient.setAppointmentid(appointmentService.selectTheLastAppointment(appointment.getPatientid()));
-        patient.setId(appointment.getPatientid());
-        patientService.updateAppointMent(patient);
+        if(CommonService.add_message_success.equals(message)){
+            patient.setAppointmentid(appointment.getId());
+            patient.setId(currentPatient.getId());
+            message=patientService.updateAppointMent(patient);
+        }
         json.put("message",message);
         return json;
     }
@@ -131,7 +137,12 @@ public class PatientController {
         Integer idlast=appointmentService.selectTheLastAppointment(patient.getId());
         Appointment appointment=appointmentService.getAppointment(idlast);
         //createAppointMent，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
-        json.put("message",PDFUtils.createAppointMent(appointment,path));
+        if(appointment==null){
+            json.put("message","暂无预约信息，无法生成挂号单");
+        }
+        else {
+            json.put("message",PDFUtils.createAppointMent(appointment,path));
+        }
         return json;
     }
 }
