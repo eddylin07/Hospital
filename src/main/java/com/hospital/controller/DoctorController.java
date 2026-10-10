@@ -11,11 +11,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
 
 @Controller
 public class DoctorController {
+    private static final String UNAUTHORIZED_PATIENT = "无权操作该患者";
+
     @Autowired
     DoctorService doctorService;
     @Autowired
@@ -80,7 +83,11 @@ public class DoctorController {
         return "doctor/seekMedicalAdvice";
     }
     @RequestMapping("/doctor/seek/{id}")
-    public String seek(@PathVariable Integer id,HttpServletRequest request){
+    public String seek(@PathVariable Integer id,HttpServletRequest request,HttpSession session,HttpServletResponse response) throws Exception{
+        if(!canCurrentDoctorAccessPatient(session,id)){
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        }
         request.setAttribute("options",optionService.getAll());
         request.setAttribute("patient",patientService.getPatient(id));
         request.setAttribute("drugs",drugsService.getAllDrugs());
@@ -88,23 +95,36 @@ public class DoctorController {
     }
     @RequestMapping(value = "/doctor/drug",method = RequestMethod.PUT)
     @ResponseBody
-    public JSONObject drug(@RequestBody Map map){
+    public JSONObject drug(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
+        Integer patientId=Integer.parseInt((String)map.get("patientid"));
+        if(!canCurrentDoctorAccessPatient(session,patientId)){
+            json.put("message",UNAUTHORIZED_PATIENT);
+            return json;
+        }
         Patient patient=new Patient();
         patient.setDrugsids(DrugsUtils.vaild(map));
-        patient.setId(Integer.parseInt((String)map.get("patientid")));
+        patient.setId(patientId);
         json.put("message",patientService.seek(patient));
         return json;
     }
     @RequestMapping(value = "/doctor/zation",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject zation(@RequestBody Hospitalization hospitalization){
+    public JSONObject zation(@RequestBody Hospitalization hospitalization,HttpSession session){
         JSONObject json=new JSONObject();
+        if(!canCurrentDoctorAccessPatient(session,hospitalization.getPatientid())){
+            json.put("message",UNAUTHORIZED_PATIENT);
+            return json;
+        }
         json.put("message",hospitalizationService.AddHospitalization(hospitalization));
         return json;
     }
     @RequestMapping(value = "/doctor/medicalhistory/{id}")
-    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request){
+    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request,HttpSession session,HttpServletResponse response) throws Exception{
+        if(!canCurrentDoctorAccessPatient(session,id)){
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        }
         request.setAttribute("medicalhistorys",medicalhistoryService.getMedicalhistoryByPatientId(id));
         return "doctor/medicalhistory";
     }
@@ -118,8 +138,13 @@ public class DoctorController {
     }
     @RequestMapping( value = "/doctor/seekinfo",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject seekinfo(@RequestBody Map map){
+    public JSONObject seekinfo(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
+        Integer patientId=Integer.parseInt((String)map.get("patientid"));
+        if(!canCurrentDoctorAccessPatient(session,patientId)){
+            json.put("message",UNAUTHORIZED_PATIENT);
+            return json;
+        }
         String message=doctorService.seekInfo(map);
         json.put("message",message);
         return json;
@@ -130,13 +155,34 @@ public class DoctorController {
         Login login=(Login)session.getAttribute("login");
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
         JSONObject json=new JSONObject();
+        if(!canCurrentDoctorAccessPatient(session,id)){
+            json.put("message",UNAUTHORIZED_PATIENT);
+            return json;
+        }
         Seek seek=seekService.getSeekByPatientId(id);
-        seek.setPatientname(patientService.getPatient(id).getName());
+        Patient patient=patientService.getPatient(id);
+        if(seek==null||patient==null){
+            json.put("message","暂无就诊单");
+            return json;
+        }
+        seek.setPatientname(patient.getName());
         seek.setDoctorname(doctor.getName());
         //createSeekInfo，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         String message= PDFUtils.createSeekInfo(seek,optionService,path);
         json.put("message",message);
         return json;
+    }
+
+    private boolean canCurrentDoctorAccessPatient(HttpSession session,Integer patientId){
+        if(session==null){
+            return false;
+        }
+        Login login=(Login)session.getAttribute("login");
+        if(login==null||login.getId()==null||patientId==null){
+            return false;
+        }
+        Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
+        return doctor!=null&&appointmentService.doctorHasAppointmentForPatient(doctor.getId(),patientId);
     }
 
 

@@ -9,6 +9,8 @@ import com.hospital.entity.Seek;
 import com.hospital.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -82,32 +84,49 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
+    @Transactional
     public String seek(Patient patient) {
         Seek seek = new Seek();
         String drugsids=patient.getDrugsids();
+        if(drugsids==null||drugsids.trim().equals("")){
+            return CommonService.upd_message_error;
+        }
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
         for(String drug:drugsids.split(",")){
-          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
+          String[] drugInfo=drug.split("@");
+          if(drugInfo.length!=2){
+              return CommonService.upd_message_error;
+          }
+          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drugInfo[0]));
+          if(drugs==null){
+              return CommonService.upd_message_error;
+          }
           BigDecimal drugprice=drugs.getPrice();
-          Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
+          Integer drugnumber=Integer.parseInt(drugInfo[1]);
           Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
+          if(drugnumber<=0||realnumber==null||realnumber<drugnumber){
+              return "对不起"+drugs.getName()+"数量不足";
           }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
-          }
+          price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
+        }
+        for(String drug:drugsids.split(",")){
+            String[] drugInfo=drug.split("@");
+            Drugs drugs=new Drugs();
+            drugs.setId(Integer.parseInt(drugInfo[0]));
+            drugs.setNumber(Integer.parseInt(drugInfo[1]));
+            if(drugsMapper.updateNumber(drugs)<=0){
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                return "对不起药品数量不足";
+            }
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
-        return message;
+        boolean updated=patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0;
+        if(!updated){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
+        return updated ? CommonService.upd_message_success : CommonService.upd_message_error;
     }
 
     @Override
