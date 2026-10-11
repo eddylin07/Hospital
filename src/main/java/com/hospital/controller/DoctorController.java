@@ -7,8 +7,10 @@ import com.hospital.uitls.DrugsUtils;
 import com.hospital.uitls.PDFUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -80,7 +82,8 @@ public class DoctorController {
         return "doctor/seekMedicalAdvice";
     }
     @RequestMapping("/doctor/seek/{id}")
-    public String seek(@PathVariable Integer id,HttpServletRequest request){
+    public String seek(@PathVariable Integer id,HttpServletRequest request,HttpSession session){
+        assertCanTreat(session, id);
         request.setAttribute("options",optionService.getAll());
         request.setAttribute("patient",patientService.getPatient(id));
         request.setAttribute("drugs",drugsService.getAllDrugs());
@@ -88,23 +91,27 @@ public class DoctorController {
     }
     @RequestMapping(value = "/doctor/drug",method = RequestMethod.PUT)
     @ResponseBody
-    public JSONObject drug(@RequestBody Map map){
+    public JSONObject drug(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
         Patient patient=new Patient();
+        Integer patientId = Integer.parseInt((String)map.get("patientid"));
+        assertCanTreat(session, patientId);
         patient.setDrugsids(DrugsUtils.vaild(map));
-        patient.setId(Integer.parseInt((String)map.get("patientid")));
+        patient.setId(patientId);
         json.put("message",patientService.seek(patient));
         return json;
     }
     @RequestMapping(value = "/doctor/zation",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject zation(@RequestBody Hospitalization hospitalization){
+    public JSONObject zation(@RequestBody Hospitalization hospitalization,HttpSession session){
         JSONObject json=new JSONObject();
+        assertCanTreat(session, hospitalization.getPatientid());
         json.put("message",hospitalizationService.AddHospitalization(hospitalization));
         return json;
     }
     @RequestMapping(value = "/doctor/medicalhistory/{id}")
-    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request){
+    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request,HttpSession session){
+        assertCanTreat(session, id);
         request.setAttribute("medicalhistorys",medicalhistoryService.getMedicalhistoryByPatientId(id));
         return "doctor/medicalhistory";
     }
@@ -118,8 +125,9 @@ public class DoctorController {
     }
     @RequestMapping( value = "/doctor/seekinfo",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject seekinfo(@RequestBody Map map){
+    public JSONObject seekinfo(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
+        assertCanTreat(session, Integer.parseInt((String)map.get("patientid")));
         String message=doctorService.seekInfo(map);
         json.put("message",message);
         return json;
@@ -130,6 +138,7 @@ public class DoctorController {
         Login login=(Login)session.getAttribute("login");
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
         JSONObject json=new JSONObject();
+        assertCanTreat(session, id);
         Seek seek=seekService.getSeekByPatientId(id);
         seek.setPatientname(patientService.getPatient(id).getName());
         seek.setDoctorname(doctor.getName());
@@ -137,6 +146,20 @@ public class DoctorController {
         String message= PDFUtils.createSeekInfo(seek,optionService,path);
         json.put("message",message);
         return json;
+    }
+
+    private void assertCanTreat(HttpSession session, Integer patientId) {
+        Login login=(Login)session.getAttribute("login");
+        Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
+        if (doctor == null || patientId == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        for (Appointment appointment : appointmentService.selectByDoctorId(doctor.getId(), null, null)) {
+            if (patientId.equals(appointment.getPatientid())) {
+                return;
+            }
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
 
 

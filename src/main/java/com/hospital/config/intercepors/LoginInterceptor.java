@@ -26,8 +26,33 @@ public class LoginInterceptor implements HandlerInterceptor {
             response.sendRedirect("/hospital/login");
             return false;
         }else {
+            Integer role = login.getRole();
+            String uri = request.getRequestURI();
+            if (uri.startsWith("/admin/") && !Integer.valueOf(1).equals(role)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return false;
+            }
+            if (isDoctorWorkflow(request) && !Integer.valueOf(2).equals(role)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return false;
+            }
+            if (uri.startsWith("/patient/") && !Integer.valueOf(3).equals(role)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return false;
+            }
             return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+    }
+
+    private boolean isDoctorWorkflow(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        if (!uri.startsWith("/doctor/")) {
+            return false;
+        }
+        // /doctor/{department} is used by authenticated patient/admin pages for doctor lookup.
+        return !("GET".equalsIgnoreCase(request.getMethod())
+                && uri.substring("/doctor/".length()).indexOf('/') < 0
+                && !uri.equals("/doctor/seekMedicalAdvice"));
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
