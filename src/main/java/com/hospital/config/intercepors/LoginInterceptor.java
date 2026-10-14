@@ -20,14 +20,58 @@ public class LoginInterceptor implements HandlerInterceptor {
         //这里的User是登陆时放入session的
         Login login = (Login) session.getAttribute("login");
         //如果session中没有user，表示没登陆
-        if (login == null){
+        if (login == null || login.getId() == null || login.getRole() == null){
             //这个方法返回false表示忽略当前请求，如果一个用户调用了需要登陆才能使用的接口，如果他没有登陆这里会直接忽略掉
             //当然你可以利用response给用户返回一些提示信息，告诉他没登陆
             response.sendRedirect("/hospital/login");
             return false;
-        }else {
-            return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
         }
+
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.equals("") && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+        if (requiresRole(path, "/admin", 1, login)
+                || requiresRole(path, "/patient", 3, login)
+                || requiresHospitalRole(path, login)
+                || requiresDoctorWorkflowRole(path, login)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;    //如果session里有login，表示该用户已经登陆，放行，用户即可继续调用自己需要的接口
+    }
+
+    private boolean requiresRole(String path, String prefix, int role, Login login) {
+        return path.startsWith(prefix) && !Integer.valueOf(role).equals(login.getRole());
+    }
+
+    private boolean requiresHospitalRole(String path, Login login) {
+        if ("/hospital/admin/index".equals(path)) {
+            return !Integer.valueOf(1).equals(login.getRole());
+        }
+        if ("/hospital/doctor/index".equals(path)) {
+            return !Integer.valueOf(2).equals(login.getRole());
+        }
+        if ("/hospital/patient/index".equals(path)) {
+            return !Integer.valueOf(3).equals(login.getRole());
+        }
+        return false;
+    }
+
+    private boolean requiresDoctorWorkflowRole(String path, Login login) {
+        if (!path.startsWith("/doctor/")) {
+            return false;
+        }
+        // /doctor/{department} is used by authenticated patient/admin pages to populate doctor choices.
+        boolean workflowPath = path.equals("/doctor/seekMedicalAdvice")
+                || path.equals("/doctor/drug")
+                || path.equals("/doctor/zation")
+                || path.equals("/doctor/seekinfo")
+                || path.startsWith("/doctor/seek/")
+                || path.startsWith("/doctor/medicalhistory/")
+                || path.startsWith("/doctor/printseek/");
+        return workflowPath && !Integer.valueOf(2).equals(login.getRole());
     }
  
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {

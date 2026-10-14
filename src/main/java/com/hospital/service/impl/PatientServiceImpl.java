@@ -9,6 +9,8 @@ import com.hospital.entity.Seek;
 import com.hospital.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -48,6 +50,9 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public Patient getPatient(Integer id) {
         Patient patient = patientMapper.selectByPrimaryKey(id);
+        if (patient == null) {
+            return null;
+        }
         Login login = loginMapper.selectByPrimaryKey(patient.getLoginid());
         if (login != null) {
             patient.setUsername(login.getUsername());
@@ -82,32 +87,65 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
+    @Transactional
     public String seek(Patient patient) {
         Seek seek = new Seek();
         String drugsids=patient.getDrugsids();
+        if (drugsids == null || drugsids.trim().equals("")) {
+            return CommonService.upd_message_error;
+        }
         seek.setPatientid(patient.getId());
         seek.setDrugs(drugsids);
         BigDecimal price=new BigDecimal("0.0");
-        String message="";
+        Map<Integer, Integer> requestedCounts = new HashMap<>();
+        Map<Integer, Drugs> requestedDrugs = new HashMap<>();
         for(String drug:drugsids.split(",")){
-          Drugs drugs=drugsMapper.selectByPrimaryKey(Integer.parseInt(drug.split("@")[0]));
-          BigDecimal drugprice=drugs.getPrice();
-          Integer drugnumber=Integer.parseInt(drug.split("@")[1]);
-          Integer realnumber=drugs.getNumber();
-          if(realnumber<=0){
-              message="对不起"+drugs.getNumber()+"数量不足";
-              break;
-          }
-          else {
-              drugs.setNumber(drugnumber);
-              drugsMapper.updateNumber(drugs);
-              price=price.add(drugprice.multiply(BigDecimal.valueOf(drugnumber)));
-
-          }
+            String[] parts = drug.split("@");
+            if (parts.length != 2) {
+                return CommonService.upd_message_error;
+            }
+            Integer drugId;
+            Integer drugnumber;
+            try {
+                drugId = Integer.parseInt(parts[0]);
+                drugnumber = Integer.parseInt(parts[1]);
+            } catch (NumberFormatException ex) {
+                return CommonService.upd_message_error;
+            }
+            if (drugnumber <= 0) {
+                return CommonService.upd_message_error;
+            }
+            Drugs drugs=drugsMapper.selectByPrimaryKey(drugId);
+            if (drugs == null) {
+                return CommonService.upd_message_error;
+            }
+            requestedCounts.put(drugId, requestedCounts.getOrDefault(drugId, 0) + drugnumber);
+            requestedDrugs.put(drugId, drugs);
+        }
+        for (Map.Entry<Integer, Integer> entry : requestedCounts.entrySet()) {
+            Drugs drugs = requestedDrugs.get(entry.getKey());
+            Integer realnumber=drugs.getNumber();
+            if(realnumber == null || realnumber < entry.getValue()){
+                return "对不起"+drugs.getName()+"数量不足";
+            }
+            BigDecimal drugprice=drugs.getPrice() == null ? BigDecimal.ZERO : drugs.getPrice();
+            price=price.add(drugprice.multiply(BigDecimal.valueOf(entry.getValue())));
+        }
+        for (Map.Entry<Integer, Integer> entry : requestedCounts.entrySet()) {
+            Drugs drugs = new Drugs();
+            drugs.setId(entry.getKey());
+            drugs.setNumber(entry.getValue());
+            if (drugsMapper.updateNumber(drugs) != 1) {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                return "对不起库存数量不足";
+            }
         }
         seek.setPrice(price);
-        message=(patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) ? CommonService.upd_message_success : CommonService.upd_message_error;
-        return message;
+        if (patientMapper.updateByPrimaryKeySelective(patient) > 0 && seekMapper.updateDrugs(seek) > 0) {
+            return CommonService.upd_message_success;
+        }
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        return CommonService.upd_message_error;
     }
 
     @Override
