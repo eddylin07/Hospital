@@ -97,13 +97,22 @@ public class PatientController {
     }
     @RequestMapping(value = "/patient/appointment",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject appointment(@RequestBody Appointment appointment){
+    public JSONObject appointment(@RequestBody Appointment appointment,HttpSession session){
         JSONObject json=new JSONObject();
-        Patient patient=new Patient();
+        Login login=(Login)session.getAttribute("login");
+        Patient patient=patientService.findPatientByLoginId(login.getId());
+        if (patient == null) {
+            json.put("message","患者信息不存在");
+            return json;
+        }
+        appointment.setPatientid(patient.getId());
         String message=appointmentService.addAppointment(appointment);
-        patient.setAppointmentid(appointmentService.selectTheLastAppointment(appointment.getPatientid()));
-        patient.setId(appointment.getPatientid());
-        patientService.updateAppointMent(patient);
+        if ("添加成功".equals(message) && appointment.getId() != null) {
+            Patient updatePatient=new Patient();
+            updatePatient.setAppointmentid(appointment.getId());
+            updatePatient.setId(patient.getId());
+            patientService.updateAppointMent(updatePatient);
+        }
         json.put("message",message);
         return json;
     }
@@ -129,7 +138,15 @@ public class PatientController {
         Login login=(Login)session.getAttribute("login");
         Patient patient=patientService.findPatientByLoginId(login.getId());
         Integer idlast=appointmentService.selectTheLastAppointment(patient.getId());
+        if (idlast == null) {
+            json.put("message","暂无预约记录，无法生成预约单");
+            return json;
+        }
         Appointment appointment=appointmentService.getAppointment(idlast);
+        if (appointment == null) {
+            json.put("message","预约记录不存在，无法生成预约单");
+            return json;
+        }
         //createAppointMent，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
         json.put("message",PDFUtils.createAppointMent(appointment,path));
         return json;
