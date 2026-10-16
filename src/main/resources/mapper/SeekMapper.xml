@@ -29,6 +29,7 @@
      update seek
      set drugs=#{drugs},price=price+#{price}
      where patientid=#{patientid}
+     order by id desc limit 1
   </update>
 
 </mapper>
