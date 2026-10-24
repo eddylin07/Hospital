@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -80,7 +81,10 @@ public class DoctorController {
         return "doctor/seekMedicalAdvice";
     }
     @RequestMapping("/doctor/seek/{id}")
-    public String seek(@PathVariable Integer id,HttpServletRequest request){
+    public String seek(@PathVariable Integer id,HttpServletRequest request,HttpSession session){
+        if(!currentDoctorHasPatient(session,id)){
+            return "redirect:/doctor/seekMedicalAdvice";
+        }
         request.setAttribute("options",optionService.getAll());
         request.setAttribute("patient",patientService.getPatient(id));
         request.setAttribute("drugs",drugsService.getAllDrugs());
@@ -88,23 +92,35 @@ public class DoctorController {
     }
     @RequestMapping(value = "/doctor/drug",method = RequestMethod.PUT)
     @ResponseBody
-    public JSONObject drug(@RequestBody Map map){
+    public JSONObject drug(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
+        Integer patientid=parseInteger(map.get("patientid"));
+        if(patientid==null||!currentDoctorHasPatient(session,patientid)){
+            json.put("message","无权限操作该患者");
+            return json;
+        }
         Patient patient=new Patient();
         patient.setDrugsids(DrugsUtils.vaild(map));
-        patient.setId(Integer.parseInt((String)map.get("patientid")));
+        patient.setId(patientid);
         json.put("message",patientService.seek(patient));
         return json;
     }
     @RequestMapping(value = "/doctor/zation",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject zation(@RequestBody Hospitalization hospitalization){
+    public JSONObject zation(@RequestBody Hospitalization hospitalization,HttpSession session){
         JSONObject json=new JSONObject();
+        if(hospitalization.getPatientid()==null||!currentDoctorHasPatient(session,hospitalization.getPatientid())){
+            json.put("message","无权限操作该患者");
+            return json;
+        }
         json.put("message",hospitalizationService.AddHospitalization(hospitalization));
         return json;
     }
     @RequestMapping(value = "/doctor/medicalhistory/{id}")
-    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request){
+    public String medicalhistory(@PathVariable Integer id,HttpServletRequest request,HttpSession session){
+        if(!currentDoctorHasPatient(session,id)){
+            return "redirect:/doctor/seekMedicalAdvice";
+        }
         request.setAttribute("medicalhistorys",medicalhistoryService.getMedicalhistoryByPatientId(id));
         return "doctor/medicalhistory";
     }
@@ -118,8 +134,13 @@ public class DoctorController {
     }
     @RequestMapping( value = "/doctor/seekinfo",method = RequestMethod.POST)
     @ResponseBody
-    public JSONObject seekinfo(@RequestBody Map map){
+    public JSONObject seekinfo(@RequestBody Map map,HttpSession session){
         JSONObject json=new JSONObject();
+        Integer patientid=parseInteger(map.get("patientid"));
+        if(patientid==null||!currentDoctorHasPatient(session,patientid)){
+            json.put("message","无权限操作该患者");
+            return json;
+        }
         String message=doctorService.seekInfo(map);
         json.put("message",message);
         return json;
@@ -130,7 +151,15 @@ public class DoctorController {
         Login login=(Login)session.getAttribute("login");
         Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
         JSONObject json=new JSONObject();
+        if(doctor==null||!doctorHasPatient(doctor,id)){
+            json.put("message","无权限操作该患者");
+            return json;
+        }
         Seek seek=seekService.getSeekByPatientId(id);
+        if(seek==null){
+            json.put("message","暂无就诊记录，无法生成");
+            return json;
+        }
         seek.setPatientname(patientService.getPatient(id).getName());
         seek.setDoctorname(doctor.getName());
         //createSeekInfo，第三个参数填空字符串就是生成在项目根目录里面，要是想生成在别的路径，例：D:\\ 就是生成在D盘根目录
@@ -139,5 +168,40 @@ public class DoctorController {
         return json;
     }
 
+    private boolean currentDoctorHasPatient(HttpSession session,Integer patientid){
+        Login login=(Login)session.getAttribute("login");
+        if(login==null||login.getId()==null){
+            return false;
+        }
+        Doctor doctor=doctorService.getDoctorByLoginId(login.getId());
+        return doctor!=null&&doctorHasPatient(doctor,patientid);
+    }
+
+    private boolean doctorHasPatient(Doctor doctor,Integer patientid){
+        if(doctor==null||doctor.getId()==null||patientid==null){
+            return false;
+        }
+        List<Appointment> appointments=appointmentService.getPatientMessage(patientid);
+        if(appointments==null){
+            return false;
+        }
+        for(Appointment appointment:appointments){
+            if(appointment.getDoctorid()!=null&&appointment.getDoctorid().equals(doctor.getId())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Integer parseInteger(Object value){
+        if(value==null){
+            return null;
+        }
+        try{
+            return Integer.parseInt(String.valueOf(value));
+        }catch (NumberFormatException e){
+            return null;
+        }
+    }
 
 }
